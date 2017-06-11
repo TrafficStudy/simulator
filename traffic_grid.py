@@ -1,9 +1,10 @@
 import json
 import random
 import copy
-import numpy as np
+from heapq import *
+# import numpy as np
 
-# Terminalogy:
+# Terminology:
 #   IID: Intersection ID, uniquely identify an intersection (if > 0)
 #        or an external source
 #   CID: Car ID, uniquely identify a car
@@ -19,21 +20,14 @@ import numpy as np
 #             (2)
 #              |
 
-LIGHT_STATES = {
-    '0S': "0|2_*",  # Green for 0-straight
-    # '0L',  # Green for 0-left
-    '1S': "1|3_*"
-}
-
+DIRECTION_NAMES = ['North', 'West', 'South', 'East']
 
 # Behavior names
 DEFAULT_RIGHT = 1  # Means: Green: go, Red/Yellow: Stop and then yield_go(1)
 DEFAULT = 2  # Green: go, Red/Yellow: Wait
-# LIGHTED_LEFT = 3  # Green: go, Red/Yellow: Wait
-# (Note lighted left is same as default)
 YIELD_LEFT = 4  # Green: yield_go(2), Red/Yellow: Wait
 
-# From#, To#, Probability to take, probablility to stop, time_to_travers,
+# From#, To#, Probability to take, probablility to stop, time_to_travel,
 # behavior (based on green/red)
 STANDARD_4WAY_YIELD = [
     [0, 1, 0.05, 0, 100, DEFAULT_RIGHT],
@@ -52,19 +46,27 @@ STANDARD_4WAY_YIELD = [
 
 # Events
 EV_CAR_STOPPED = 1
+EV_CAR_ENTER_INTERSECTION = 2
+EV_LIGHT_CHANGE = 3
+EV_DEQUEUE_GREEN = 4  # This is the slow de-queuing of a light just turned green
 
-# Light states
-LS_STOP = 1   # Red or yellow light
-LS_GO = 2  # Green light with no cars
-LS_DEQUEUE = 3   # Green with a queue, so everyone goes out a bit slower
+EVENT_FORMAT_STRINGS = [
+    "",
+    "Car {0} stopped after passing intersection #{1}",
+    "Car {0} approaches intersection #{1} from direction{2}",
+    "Light changes at intersection #{0}",
+    "Car {0} leaves intersection #{1} slowly"
+]
+
+# Some time constants (in seconds)
+TS_FIRST_DEQUEUE_DELAY = 2
+TS_NEXT_DEQUEUE_DELAY = 2
 
 
 # This is the "basic light", which has a pair of connected red/gree lights
 class LightState:
     def __init__(self):
         super()
-        self.cur_time = 0
-        self.cur_state = LS_GO
         # period and start determines how lights change
         self.period = 120  # Typical red light duration
         self.half_period = 60
@@ -94,11 +96,21 @@ class Intersection:
         self.n_to = 4
         self.from_iids = [None] * self.n_from
         self.to_iids = [None] * self.n_to
+        self.to_dir_lookup = [2, 3, 0, 1]  # Leaving 0, arriving 2 etc.
         self.mesh = copy.deepcopy(mesh)
         self.light_state = None
         self.intersection_state = None
-        self.outgoing_queue = [[]] * (self.n_from * self.n_to)  # include uturn
+        self.outgoing_queue = [[] for i in range(self.n_from * self.n_to)]  # include uturn
         self.light_state = LightState()
+        self.qid_to_route = self.build_qid_lookup()
+
+    def build_qid_lookup(self):
+        h = {}
+        for r in self.mesh:
+            qid = r[0] + r[1] * self.n_from
+            h[qid] = r
+
+        return h
 
     def assign_from_iid(self, d, iid):
         self.from_iids[d] = iid
@@ -106,37 +118,69 @@ class Intersection:
     def assign_to_iid(self, d, iid):
         self.to_iids[d] = iid
 
-    # Ingest the car into the queue and will be spit out at schedule_traffic
-    def incoming_traffic(self, from_iid, cars, valid_ts):
-        for arrival, cid in cars:
-            # First determin where this car will go:
-            ran = random.random()
-            ran_acc = 0
-            for route in self.mesh:
-                if self.from_iids[route[0]] != from_iid:
-                    continue
-                ran_acc += route[2]
-                if ran < ran_acc:  # Taken
-                    ran2 = random.random()
-                    if ran2 < route[3]:  # Car got home
-                        stop_time = arrival + round(route[4] * ran2 / route[3])
-                        self.grid.add_event(EV_CAR_STOPPED, stop_time,
-                                            (cid, self.iid, route[1]))
-                    else:  # Car continues
-                        item = [arrival, cid, route[0], route[1]]
-                        qid = route[0] + route[1] * self.n_from
-                        self.outgoing_queue[qid].append(item)
+    def incoming_traffic(self, ts, d, cid):
+        # First determine where this car will go:
+        ran = random.random()
+        ran_acc = 0
+        found_route = None
+        for route in self.mesh:
+            if route[0] != d:
+                continue
+            ran_acc += route[2]
+            if ran >= ran_acc:  # Not taken
+                continue
+            found_route = route
+            break
 
-    def schedule_traffic(self):
-        for qid in range(self.n_from * self.n_to):
-            self.outgoing_queue[qid].sort()
-            fi = qid % self.n_from
-            ti = qid / self.n_from
-            # Here we have a sorted queue of cars, just need to figure out the
-            # lights to determine how much each has to wait
+        red = self.light_state.is_red_at_time(ts, d)
 
-            self.grid.schedule_traffic(self.iid, self.to_iids[ti],
-                                       self.outgoing_queue[qid])
+        if red:
+            ng = self.light_state.next_green(ts, d)
+            self.grid.add_event(EV_LIGHT_CHANGE, ng, (self.iid, (d & 1)))
+
+        qid = found_route[0] + found_route[1] * self.n_from
+        if red or self.outgoing_queue[qid]:
+            # Enter the queue and schedule a light_change event
+            item = [ts, cid, found_route[0], found_route[1]]
+            self.outgoing_queue[qid].append(item)  # Queue will take care of this care
+        else:
+            # No queue, just go through full speed
+            print("Car {} passed intersection #{} fast, to direction{}".format(cid, self.iid, found_route[1]))
+            self.go_to_next_intersection(ts, cid, found_route)
+
+    def go_to_next_intersection(self, ts, cid, found_route):
+        # Check if the car will "go home"
+        ran2 = random.random()
+        if ran2 < found_route[3]:  # Car got home
+            stop_time = ts + round(found_route[4] * ran2 / found_route[3])
+            self.grid.add_event(EV_CAR_STOPPED, stop_time,
+                                (cid, self.iid, found_route[1]))
+            return
+
+        # Car continues
+        arrival = ts + found_route[4]
+        to_d = self.to_dir_lookup[found_route[1]]
+        to_iid = self.to_iids[found_route[1]]
+        self.grid.add_event(EV_CAR_ENTER_INTERSECTION, arrival, (cid, to_iid, to_d))
+
+    def light_change(self, ts, to_state):
+        for route in self.mesh:
+            if (route[1] & 1) != to_state:
+                continue  # Nothing to do with red ones
+
+            qid = route[0] + route[1] * self.n_from
+            if self.outgoing_queue[qid]:
+                cid = self.outgoing_queue[qid][0][1]  # Peek only
+                self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_FIRST_DEQUEUE_DELAY,
+                                    (cid, self.iid, qid))
+
+    def dequeue_green(self, ts, cid, qid):
+        item = self.outgoing_queue[qid].pop(0)
+        self.go_to_next_intersection(ts, cid, self.qid_to_route[qid])
+        if self.outgoing_queue[qid]:
+            cid = self.outgoing_queue[qid][1]
+            self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_NEXT_DEQUEUE_DELAY,
+                                (cid, self.iid, qid))
 
 
 class Inlet:
@@ -149,12 +193,17 @@ class Inlet:
 class TrafficGrid:
     def __init__(self):
         super()
-        random.seek(0)  # Deterministic random numbers
         self.events = []
         self.inlets = []
         self.outlets = []
         self.intersections = []
-        self.last_valid_iid = 1
+        self.last_event_ts = 0
+        self.event_handlers = {
+            EV_CAR_STOPPED: None,
+            EV_CAR_ENTER_INTERSECTION: self.efn_enter_intersection,
+            EV_LIGHT_CHANGE: self.efn_light_change,
+            EV_DEQUEUE_GREEN: self.efn_dequeue_green,
+        }
 
     def load(self, file):
         with open(file, 'r') as fp:
@@ -172,29 +221,23 @@ class TrafficGrid:
             }
             json.dump(data, fp)
 
-    def schedule_traffic(self, from_iid, to_iid, queue):
-        pass
-
     def generate_grid(self, m, n):
-        # Allocate 1 - m*n for intersections
-        # Allocate m*n +1 - m*n +2*m for top/bottom
-
-        self.intersections = [None] * (m * n)
+        self.intersections = [None] * ((m + 2) * (n + 2))
         for i in range(m + 2):
             for j in range(n + 2):
                 iid = i + j * (m + 2)
-                if i > 0 and i < m + 1 and j > 0 and j < n + 1:
+                if 0 < i < m + 1 and 0 < j < n + 1:
                     io = Intersection(iid, self)
                     io.assign_from_iid(0, iid - (m + 2))
                     io.assign_from_iid(1, iid - 1)
                     io.assign_from_iid(2, iid + (m + 2))
                     io.assign_from_iid(3, iid + 1)
-                    io.assign_from_iid(0, iid - (m + 2))
-                    io.assign_from_iid(1, iid - 1)
-                    io.assign_from_iid(2, iid + (m + 2))
-                    io.assign_from_iid(3, iid + 1)
+                    io.assign_to_iid(0, iid - (m + 2))
+                    io.assign_to_iid(1, iid - 1)
+                    io.assign_to_iid(2, iid + (m + 2))
+                    io.assign_to_iid(3, iid + 1)
                 else:
-                    if (i == 0 or i == m + 1) and (j == 0 and j == n + 1):
+                    if (i == 0 or i == m + 1) and (j == 0 or j == n + 1):
                         continue  # Nothing at the corners
                     if i == 0:
                         to_iid = iid + 1
@@ -210,7 +253,68 @@ class TrafficGrid:
                         d = 2
                     io = Inlet(iid, to_iid, d)
                     self.inlets.append(io)
-                self.intersections[i + j * m] = io
+                self.intersections[iid] = io
 
     def add_event(self, ev_type, ts, payload):
-        self.events.append([ev_type, ts, payload])
+        heappush(self.events, [ts, ev_type, payload])
+
+    def print_event(self, ev):
+        fmt = EVENT_FORMAT_STRINGS[ev[1]]
+        print("{:-3d}: ".format(ev[0]) + fmt.format(*ev[2]))
+
+    def event_loop(self):
+        while len(self.events) > 0:
+            ev = heappop(self.events)
+            self.print_event(ev)
+            self.last_event_ts = ev[0]
+            fn = self.event_handlers[ev[1]]
+            if fn:
+                fn(ev[0], ev[2])
+
+    # Payload is [cid, toIID, direction]
+    def efn_enter_intersection(self, ts, payload):
+        cid = payload[0]
+        to_iid = payload[1]
+        d = payload[2]
+        iso = self.intersections[to_iid]
+        if type(iso) is Inlet:
+            pass
+            # Car exits from the grid
+        else:
+            iso.incoming_traffic(ts, d, cid)
+
+    # This event only for intersections with car waiting
+    # Payload is [iid, to_light_state]
+    def efn_light_change(self, ts, payload):
+        iid = payload[0]
+        state = payload[1]
+        iso = self.intersections[iid]
+        iso.light_change(ts, state)
+
+    def efn_dequeue_green(self, ts, payload):
+        cid = payload[0]
+        iid = payload[1]
+        qid = payload[2]
+        iso = self.intersections[iid]
+        iso.dequeue_green(ts, cid, qid)
+
+
+if __name__ == "__main__":
+    random.seed(10)  # Deterministic random numbers
+    tr = TrafficGrid()
+    tr.generate_grid(3, 3)
+    # In this 3x3 grid example:
+    #     1   2   3
+    #     |   |   |
+    #  5--6---7---8---9
+    #     |   |   |
+    # 10--11--12--13--14
+    #     |   |   |
+    # 15--16--17--18--19
+    #     |   |   |
+    #     21  22  23
+
+    tr.add_event(EV_CAR_ENTER_INTERSECTION, 1000, (1, 7, 0))
+    tr.add_event(EV_CAR_ENTER_INTERSECTION, 1001, (2, 11, 1))
+    tr.add_event(EV_CAR_ENTER_INTERSECTION, 1003, (3, 17, 2))
+    tr.event_loop()
