@@ -1,7 +1,8 @@
 import json
 import random
 import copy
-from heapq import *
+#from heapq import *
+import heapq
 
 from choreographer import Choreographer
 # import numpy as np
@@ -291,7 +292,7 @@ class TrafficGrid:
                 self.intersections[iid] = io
 
     def add_event(self, ev_type, ts, payload):
-        heappush(self.events, [ts, ev_type, payload])
+        heapq.heappush(self.events, [ts, ev_type, payload])
 
     def print_event(self, ev):
         fmt = EVENT_FORMAT_STRINGS[ev[1]]
@@ -299,7 +300,7 @@ class TrafficGrid:
 
     def event_loop(self):
         while len(self.events) > 0:
-            ev = heappop(self.events)
+            ev = heapq.heappop(self.events)
             self.print_event(ev)
             self.last_event_ts = ev[0]
             fn = self.event_handlers[ev[1]]
