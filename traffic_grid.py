@@ -1,7 +1,6 @@
 import json
 import random
 import copy
-#from heapq import *
 import heapq
 
 from choreographer import Choreographer
@@ -359,8 +358,8 @@ if __name__ == "__main__":
     #     |   |   |
     #     21  22  23
 
-    tr.add_event(EV_CAR_ENTER_INTERSECTION, 1000, (1, 7, 0))
-    tr.add_event(EV_CAR_ENTER_INTERSECTION, 1001, (2, 11, 1))
-    tr.add_event(EV_CAR_ENTER_INTERSECTION, 1003, (3, 17, 2))
+    tr.add_event(EV_CAR_ENTER_INTERSECTION, 0, (1, 7, 0))
+    tr.add_event(EV_CAR_ENTER_INTERSECTION, 1, (2, 11, 1))
+    tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
     tr.event_loop()
     print("All finished")
