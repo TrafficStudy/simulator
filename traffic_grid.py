@@ -10,7 +10,7 @@ from choreographer import Choreographer
 #        or an external source
 #   CID: Car ID, uniquely identify a car
 
-
+# Traffic is awesome
 #              |
 #             (0)
 #              |
