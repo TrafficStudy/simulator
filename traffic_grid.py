@@ -103,6 +103,12 @@ class Intersection:
         self.outgoing_queue = [[] for i in range(self.n_from * self.n_to)]  # include uturn
         self.light_state = LightState()
         self.qid_to_route = self.build_qid_lookup()
+        self.pos_x = 0
+        self.pos_y = 0
+
+    def set_position(self, x, y):
+        self.pos_x = x
+        self.pos_y = y
 
     def build_qid_lookup(self):
         h = {}
@@ -134,6 +140,7 @@ class Intersection:
 
         red = self.light_state.is_red_at_time(ts, d)
 
+        state = 0  # pass
         if red:
             ng = self.light_state.next_green(ts, d)
             self.grid.add_event(EV_LIGHT_CHANGE, ng, (self.iid, (d & 1)))
@@ -143,10 +150,12 @@ class Intersection:
             # Enter the queue and schedule a light_change event
             item = [ts, cid, found_route[0], found_route[1]]
             self.outgoing_queue[qid].append(item)  # Queue will take care of this care
+            state = -1 if red else len(self.outgoing_queue[qid])
         else:
             # No queue, just go through full speed
             print("Car {} passed intersection #{} fast, to direction{}".format(cid, self.iid, found_route[1]))
             self.go_to_next_intersection(ts, cid, found_route)
+        return (found_route[1], state)
 
     def go_to_next_intersection(self, ts, cid, found_route):
         # Check if the car will "go home"
@@ -181,6 +190,10 @@ class Intersection:
             cid = self.outgoing_queue[qid][1]
             self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_NEXT_DEQUEUE_DELAY,
                                 (cid, self.iid, qid))
+        return item
+
+    def is_inlet(self):
+        return False
 
 
 class Inlet:
@@ -189,9 +202,12 @@ class Inlet:
         self.to_iid = to_iid
         self.to_dir = to_dir
 
+    def is_inlet(self):
+        return True
+
 
 class TrafficGrid:
-    def __init__(self):
+    def __init__(self, choreographer=None):
         super()
         self.events = []
         self.inlets = []
@@ -204,6 +220,7 @@ class TrafficGrid:
             EV_LIGHT_CHANGE: self.efn_light_change,
             EV_DEQUEUE_GREEN: self.efn_dequeue_green,
         }
+        self.choreographer = choreographer
 
     def load(self, file):
         with open(file, 'r') as fp:
@@ -228,6 +245,7 @@ class TrafficGrid:
                 iid = i + j * (m + 2)
                 if 0 < i < m + 1 and 0 < j < n + 1:
                     io = Intersection(iid, self)
+                    io.set_position(i * 400 - 200, j * 400 - 200)
                     io.assign_from_iid(0, iid - (m + 2))
                     io.assign_from_iid(1, iid - 1)
                     io.assign_from_iid(2, iid + (m + 2))
@@ -278,10 +296,13 @@ class TrafficGrid:
         d = payload[2]
         iso = self.intersections[to_iid]
         if type(iso) is Inlet:
-            pass
+            if self.choreographer:
+                self.choreographer.car_intersection_event(ts, cid, to_iid, d, -1)
             # Car exits from the grid
         else:
-            iso.incoming_traffic(ts, d, cid)
+            od, state = iso.incoming_traffic(ts, d, cid)
+            if self.choreographer:
+                self.choreographer.car_intersection_event(ts, cid, to_iid, d, od, state)
 
     # This event only for intersections with car waiting
     # Payload is [iid, to_light_state]
@@ -297,6 +318,8 @@ class TrafficGrid:
         qid = payload[2]
         iso = self.intersections[iid]
         iso.dequeue_green(ts, cid, qid)
+        if self.choreographer:
+            self.choreographer.car_dequeue_event(ts, cid, iid)
 
 
 if __name__ == "__main__":
