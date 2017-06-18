@@ -2,6 +2,8 @@ import json
 import random
 import copy
 from heapq import *
+
+from choreographer import Choreographer
 # import numpy as np
 
 # Terminology:
@@ -150,7 +152,7 @@ class Intersection:
             # Enter the queue and schedule a light_change event
             item = [ts, cid, found_route[0], found_route[1]]
             self.outgoing_queue[qid].append(item)  # Queue will take care of this care
-            state = -1 if red else len(self.outgoing_queue[qid])
+            state = len(self.outgoing_queue[qid])
         else:
             # No queue, just go through full speed
             print("Car {} passed intersection #{} fast, to direction{}".format(cid, self.iid, found_route[1]))
@@ -184,6 +186,8 @@ class Intersection:
                                     (cid, self.iid, qid))
 
     def dequeue_green(self, ts, cid, qid):
+        if len(self.outgoing_queue[qid]) == 0:
+            return
         item = self.outgoing_queue[qid].pop(0)
         self.go_to_next_intersection(ts, cid, self.qid_to_route[qid])
         if self.outgoing_queue[qid]:
@@ -201,9 +205,15 @@ class Inlet:
         self.iid = iid
         self.to_iid = to_iid
         self.to_dir = to_dir
+        self.pos_x = None
+        self.pos_y = None
 
     def is_inlet(self):
         return True
+
+    def set_position(self, x, y):
+        self.pos_x = x
+        self.pos_y = y
 
 
 class TrafficGrid:
@@ -255,21 +265,28 @@ class TrafficGrid:
                     io.assign_to_iid(2, iid + (m + 2))
                     io.assign_to_iid(3, iid + 1)
                 else:
+                    pos_x = i * 400 - 200
+                    pos_y = j * 400 - 200
                     if (i == 0 or i == m + 1) and (j == 0 or j == n + 1):
                         continue  # Nothing at the corners
                     if i == 0:
+                        pos_x = 0
                         to_iid = iid + 1
                         d = 1
                     elif i == m + 1:
+                        pos_x = 1200
                         to_iid = iid - 1
                         d = 3
                     elif j == 0:
+                        pos_y = 0
                         to_iid = iid + m + 2
                         d = 0
                     else:
+                        pos_y = 1200
                         to_iid = iid - (m + 2)
                         d = 2
                     io = Inlet(iid, to_iid, d)
+                    io.set_position(pos_x, pos_y)
                     self.inlets.append(io)
                 self.intersections[iid] = io
 
@@ -319,12 +336,16 @@ class TrafficGrid:
         iso = self.intersections[iid]
         iso.dequeue_green(ts, cid, qid)
         if self.choreographer:
-            self.choreographer.car_dequeue_event(ts, cid, iid)
+            n_from = iso.n_from
+            id = qid % n_from
+            od = int(qid / n_from)  # od is out_going direction
+            self.choreographer.car_dequeue_event(ts, cid, iid, id, od)
 
 
 if __name__ == "__main__":
     random.seed(10)  # Deterministic random numbers
     tr = TrafficGrid()
+    tr.choreographer = Choreographer(tr)
     tr.generate_grid(3, 3)
     # In this 3x3 grid example:
     #     1   2   3
@@ -341,3 +362,4 @@ if __name__ == "__main__":
     tr.add_event(EV_CAR_ENTER_INTERSECTION, 1001, (2, 11, 1))
     tr.add_event(EV_CAR_ENTER_INTERSECTION, 1003, (3, 17, 2))
     tr.event_loop()
+    print("All finished")

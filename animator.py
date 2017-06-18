@@ -1,6 +1,7 @@
 import random, math, time, sys
 import pygame
 from traffic_grid import *
+from constants import *
 
 # Animator basics: (everything is in meters)
 # lane width: 3.7  (us road lane width)
@@ -10,71 +11,6 @@ from traffic_grid import *
 #     large: 2.4 x 8.4  (Large truck)
 
 
-CAR_DIMENSIONS = [
-    [0.5, (1.7, 4.4)],
-    [0.4, (1.9, 4.7)],
-    [0.1, (2.4, 8.4)]
-]
-
-
-def ROT90(l):
-    return list(map(lambda xy : (-xy[1], xy[0]), l))
-
-
-def MIRROR_Y(l):
-    return list(map(lambda xy: (xy[0], -xy[1]), l))
-
-
-def MIRROR_XY(l):
-    return list(map(lambda xy: (-xy[0], -xy[1]), l))
-
-
-def APPLY_4x(l):
-    r9 = ROT90(l)
-    r18 = ROT90(r9)
-    r27 = ROT90(r18)
-    return [l, r9, r18, r27]
-
-
-def APPLY_8x(l):
-    r9 = ROT90(l)
-    mi = MIRROR_Y(l)
-    r9m = ROT90(mi)
-    mxy = MIRROR_XY(l)
-    return [l, mi, r9, r9m, mxy, MIRROR_Y(mxy), MIRROR_XY(r9), MIRROR_XY(r9m)]
-
-# This is from [-1, 1] on both dimensions
-CAR_POLYLINES = [(-0.25, -1), (-1, 0), (-1, 1), (1, 1), (1, 0), (0.25, -1)]
-LANE_WIDTH = 3.7
-ZEBRA_WIDTH = 2.0
-QZONE_LEN = 4 * 2.4
-SZONE_LEN = 3 * 3.7
-ISEC_SIZE = 3.5 * LANE_WIDTH
-CS_W_SHAPE1 = [
-    (-ISEC_SIZE - ZEBRA_WIDTH - QZONE_LEN - SZONE_LEN, -LANE_WIDTH * 1.5),
-    (-ISEC_SIZE - ZEBRA_WIDTH - QZONE_LEN, -ISEC_SIZE),
-    (-ISEC_SIZE - ZEBRA_WIDTH, -ISEC_SIZE),
-    (-ISEC_SIZE - ZEBRA_WIDTH, ISEC_SIZE),
-    (-ISEC_SIZE - ZEBRA_WIDTH - QZONE_LEN, ISEC_SIZE),
-    (-ISEC_SIZE - ZEBRA_WIDTH - QZONE_LEN - SZONE_LEN, LANE_WIDTH * 1.5)
-]
-CS_WHITES = [
-    [(-ISEC_SIZE, -ISEC_SIZE), (-ISEC_SIZE, ISEC_SIZE), (ISEC_SIZE, ISEC_SIZE),
-     (ISEC_SIZE, -ISEC_SIZE), (-ISEC_SIZE, -ISEC_SIZE)]
-] + APPLY_4x(CS_W_SHAPE1)
-
-CS_YELLOW = APPLY_8x(
-    [(-ISEC_SIZE - ZEBRA_WIDTH - QZONE_LEN - SZONE_LEN, LANE_WIDTH * 0.25),
-     (-ISEC_SIZE - ZEBRA_WIDTH, LANE_WIDTH * 0.25)])
-
-CS_DOTTED = APPLY_8x([(ISEC_SIZE + ZEBRA_WIDTH, LANE_WIDTH * 1.25),
-                      (ISEC_SIZE + ZEBRA_WIDTH + QZONE_LEN, LANE_WIDTH * 1.25)]) + \
-            APPLY_8x([(ISEC_SIZE + ZEBRA_WIDTH, LANE_WIDTH * 2.25),
-                      (ISEC_SIZE + ZEBRA_WIDTH + QZONE_LEN, LANE_WIDTH * 2.25)])
-
-COLOR_HALF_WHITE = (128,128,128)
-COLOR_WHITE = (255,255,255)
-COLOR_YELLOW = (255,255,0)
 
 def transform(xy, tr):
     x0, y0 = xy
@@ -85,8 +21,8 @@ def transform(xy, tr):
     x0 *= xs
     y0 *= ys
     # Then rotate
-    x1 = x0 * ct - y0 * st
-    y1 = x0 * st + y0 * ct
+    x1 = x0 * ct + y0 * st
+    y1 = x0 * st - y0 * ct
     # Then translate
     x = x1 + xt
     y = y1 + yt
@@ -95,7 +31,8 @@ def transform(xy, tr):
 
 
 class Car:
-    def __init__(self):
+    def __init__(self, cid):
+        self.cid = cid
         # Figure out what type of cars we have here
         r = random.random()
         acc = 0
@@ -107,27 +44,24 @@ class Car:
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         self.polylines = CAR_POLYLINES
 
-    def draw(self, disp, t):
-        tr = (self.width, self.length, 0, 0, 0)
-        # First determine location and orientation
-        points = map(lambda xy: transform(xy, tr), self.polylines)
-        pygame.draw.lines(disp, self.color, True, points, 1)
-
-
 
 class Animator:
     def __init__(self, traffic_grid):
-        self.canvas_size = 1200.0  # In meter
+        self.canvas_size = 1200.0  # In meters
         self.traffic_grid = traffic_grid
         self.cars = []
-        self.intersections = []
         self.disp = None
         self.t0 = 0
         self.screen_size = (900, 900)
         self.screen_offset = (0, 0)
-        self.screen_scale = self.screen_size[0] / self.canvas_size * 2  # Each pixel == ? meters
+        self.screen_scale = self.screen_size[0] / self.canvas_size  # Each pixel == ? meters
 
+        self.setup_cars()
         self.init_pygame()
+
+    def setup_cars(self):
+        for cid in self.traffic_grid.choreographer.cars.keys():
+            self.cars.append(Car(cid))
 
     def init_pygame(self):
         pygame.init()
@@ -200,7 +134,18 @@ class Animator:
 
     def draw_cars(self, t):
         for car in self.cars:
-            car.draw(self.disp, t)
+            self.draw_car(t, car)
+
+    def draw_car(self, t, car):
+        info = self.traffic_grid.choreographer.car_info(car.cid, t)
+        if info is None:
+            return  # No more drawing
+        ss = self.screen_scale
+        tr = (car.width / 2 * ss, car.length / 2 * ss, info[0] * ss - self.screen_offset[0],
+              info[1] * ss - self.screen_offset[1], info[2])
+        # First determine location and orientation
+        points = list(map(lambda xy: transform(xy, tr), car.polylines))
+        pygame.draw.lines(self.disp, car.color, True, points, 1)
 
     def draw(self, t):
         self.draw_grid()
@@ -216,7 +161,7 @@ class Animator:
                     return
                 elif evt.type == pygame.MOUSEMOTION and evt.buttons[0] != 0:
                     self.drag(evt.rel)
-                    print("Scree offste", self.screen_offset)
+                    # print("Scree offste", self.screen_offset)
                 elif evt.type == pygame.MOUSEBUTTONDOWN:
                     if evt.button == 4:  # Scroll up
                         self.zoom_in()
@@ -225,7 +170,7 @@ class Animator:
 
             # Draw the scene
             self.disp.fill((0, 0, 0))
-            t = time.time() - self.t0
+            t = (time.time() - self.t0) * 3
             self.draw(t)
 
             pygame.display.update()
@@ -269,6 +214,13 @@ class Animator:
 
 if __name__ == "__main__":
     tr = TrafficGrid()
+    tr.choreographer = Choreographer(tr)
     tr.generate_grid(3, 3)
+    tr.add_event(EV_CAR_ENTER_INTERSECTION, 0, (1, 7, 0))
+    tr.add_event(EV_CAR_ENTER_INTERSECTION, 1, (2, 11, 1))
+    tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
+    tr.event_loop()
+
     an = Animator(tr)
     an.event_loop()
+    print("All done")
