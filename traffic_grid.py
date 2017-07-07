@@ -84,8 +84,8 @@ class LightState:
         if (d & 1) != 0:
             start += self.half_period
 
-        nperiods = int((time - start) / self.period)
-        return nperiods * self.period + self.half_period + start
+        n_periods = int((time - start) / self.period)
+        return n_periods * self.period + self.half_period + start
 
 
 class Intersection:
@@ -154,7 +154,7 @@ class Intersection:
             state = len(self.outgoing_queue[qid])
         else:
             # No queue, just go through full speed
-            print("Car {} passed intersection #{} fast, to direction{}".format(cid, self.iid, found_route[1]))
+            print("Car {} passed intersection #{} fast, to {}".format(cid, self.iid,  DIRECTION_NAMES[found_route[1]]))
             self.go_to_next_intersection(ts, cid, found_route)
         return (found_route[1], state)
 
@@ -175,7 +175,7 @@ class Intersection:
 
     def light_change(self, ts, to_state):
         for route in self.mesh:
-            if (route[1] & 1) != to_state:
+            if (route[0] & 1) != to_state:
                 continue  # Nothing to do with red ones
 
             qid = route[0] + route[1] * self.n_from
@@ -190,7 +190,7 @@ class Intersection:
         item = self.outgoing_queue[qid].pop(0)
         self.go_to_next_intersection(ts, cid, self.qid_to_route[qid])
         if self.outgoing_queue[qid]:
-            cid = self.outgoing_queue[qid][1]
+            cid = self.outgoing_queue[qid][0][1]
             self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_NEXT_DEQUEUE_DELAY,
                                 (cid, self.iid, qid))
         return item
@@ -294,7 +294,10 @@ class TrafficGrid:
 
     def print_event(self, ev):
         fmt = EVENT_FORMAT_STRINGS[ev[1]]
-        print("{:-3d}: ".format(ev[0]) + fmt.format(*ev[2]))
+        msg = "{:-3d}: ".format(ev[0]) + fmt.format(*ev[2])
+        for d in range(4):
+            msg = msg.replace('direction{}'.format(d), DIRECTION_NAMES[d])
+        print(msg)
 
     def event_loop(self):
         while len(self.events) > 0:
@@ -342,7 +345,7 @@ class TrafficGrid:
 
 
 if __name__ == "__main__":
-    random.seed(10)  # Deterministic random numbers
+    # random.seed(100)  # Deterministic random numbers
     tr = TrafficGrid()
     tr.choreographer = Choreographer(tr)
     tr.generate_grid(3, 3)
@@ -357,8 +360,14 @@ if __name__ == "__main__":
     #     |   |   |
     #     21  22  23
 
-    tr.add_event(EV_CAR_ENTER_INTERSECTION, 0, (1, 7, 0))
-    tr.add_event(EV_CAR_ENTER_INTERSECTION, 1, (2, 11, 1))
-    tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
+    last_ts = 0
+    inlet_array = [1, 2, 3, 5, 9, 10, 14, 15, 19, 21, 22, 23]
+    for i in range(100):
+        last_ts += random.randint(0, 100)
+        inlet = tr.intersections[random.choice(inlet_array)]
+        tr.add_event(EV_CAR_ENTER_INTERSECTION, last_ts, (i, inlet.to_iid, inlet.to_dir))
+    # tr.add_event(EV_CAR_ENTER_INTERSECTION, 0, (1, 7, 0))
+    # tr.add_event(EV_CAR_ENTER_INTERSECTION, 1, (2, 11, 1))
+    # tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
     tr.event_loop()
     print("All finished")

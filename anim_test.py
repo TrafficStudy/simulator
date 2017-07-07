@@ -4,6 +4,7 @@ import time
 import math
 import random
 
+
 def gen_random_item():
     t0 = random.randint(1, 100)
     s0 = random.randint(1, 20) / 10
