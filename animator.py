@@ -1,5 +1,6 @@
 import random, math, time, sys
 import pygame
+import pygame.font
 from traffic_grid import *
 from constants import *
 
@@ -30,6 +31,10 @@ def transform(xy, tr):
     return (x, y)
 
 
+def distance(x, y):
+    return math.sqrt(x*x+y*y)
+
+
 class Car:
     def __init__(self, cid):
         self.cid = cid
@@ -51,6 +56,7 @@ class Animator:
         self.traffic_grid = traffic_grid
         self.cars = []
         self.disp = None
+        self.font = None
         self.t0 = 0
         self.screen_size = (900, 900)
         self.screen_offset = (0, 0)
@@ -65,6 +71,8 @@ class Animator:
 
     def init_pygame(self):
         pygame.init()
+        pygame.font.init()
+        self.font = pygame.font.SysFont('Comic Sans MS', 30)
         self.disp = pygame.display.set_mode(self.screen_size, 0, 32)
         self.t0 = time.time()
 
@@ -74,11 +82,11 @@ class Animator:
         if lw < 1:
             lw = 1
         for s in [1, -1]:
-            dx = (x + s * LANE_WIDTH * 0.25) * ss - self.screen_offset[0]
-            dy0 = y0 * ss - self.screen_offset[1]
-            dy1 = y1 * ss - self.screen_offset[1]
+            dx = (x + s * LANE_WIDTH * 0.25) * ss - self.screen_offset[0] + self.screen_size[0] / 2
+            dy0 = y0 * ss - self.screen_offset[1] + self.screen_size[1] / 2
+            dy1 = y1 * ss - self.screen_offset[1] + self.screen_size[1] / 2
             pygame.draw.line(self.disp, COLOR_YELLOW, (dx, dy0), (dx, dy1), lw)
-            dx = (x + s * LANE_WIDTH * 1.5) * ss - self.screen_offset[0]
+            dx = (x + s * LANE_WIDTH * 1.5) * ss - self.screen_offset[0] + self.screen_size[0] / 2
             pygame.draw.line(self.disp, COLOR_WHITE, (dx, dy0), (dx, dy1), lw)
 
     def draw_dy_line(self, x0, x1, y):
@@ -87,11 +95,11 @@ class Animator:
         if lw < 1:
             lw = 1
         for s in [1, -1]:
-            dy = (y + s * LANE_WIDTH * 0.25) * ss - self.screen_offset[1]
-            dx0 = x0 * ss - self.screen_offset[0]
-            dx1 = x1 * ss - self.screen_offset[0]
+            dy = (y + s * LANE_WIDTH * 0.25) * ss - self.screen_offset[1] + self.screen_size[1] / 2
+            dx0 = x0 * ss - self.screen_offset[0] + self.screen_size[0] / 2
+            dx1 = x1 * ss - self.screen_offset[0] + self.screen_size[0] / 2
             pygame.draw.line(self.disp, COLOR_YELLOW, (dx0, dy), (dx1, dy), lw)
-            dy = (y + s * LANE_WIDTH * 1.5) * ss - self.screen_offset[1]
+            dy = (y + s * LANE_WIDTH * 1.5) * ss - self.screen_offset[1] + self.screen_size[1] / 2
             pygame.draw.line(self.disp, COLOR_WHITE, (dx0, dy), (dx1, dy), lw)
 
     def draw_d_lines(self, a, b1, b2):
@@ -100,18 +108,19 @@ class Animator:
 
     def draw_grid(self):
         # TODO: This is hard coded for now, should be following intersections
-        for i in [1, 2, 3]:
-            md = 400 * i - 200
-            bc = 0
-            for j in [1, 2, 3]:
-                bd = j * 400 - 200
+        for i in [-1, 0, 1]:
+            md = 400 * i
+            bc = -600
+            for j in [-1, 0, 1]:
+                bd = j * 400
                 self.draw_d_lines(md, bc, bd - ISEC_SIZE - ZEBRA_WIDTH - QZONE_LEN - SZONE_LEN)
                 bc = bd + ISEC_SIZE + ZEBRA_WIDTH + QZONE_LEN + SZONE_LEN
-            self.draw_d_lines(md, bc, 1200)
+            self.draw_d_lines(md, bc, 600)
 
     def draw_intersection(self, io, t):
         ss = self.screen_scale
-        tr = [ss, ss, io.pos_x * ss - self.screen_offset[0], io.pos_y * ss - self.screen_offset[1], 0]
+        tr = [ss, ss, io.pos_x * ss - self.screen_offset[0] + self.screen_size[0] / 2,
+              io.pos_y * ss - self.screen_offset[1] + self.screen_size[1] / 2, 0]
         # Closed solid whites
         lw = round(ss * 0.2)
         if lw < 1:
@@ -141,8 +150,8 @@ class Animator:
         if info is None:
             return  # No more drawing
         ss = self.screen_scale
-        tr = (car.width / 2 * ss, car.length / 2 * ss, info[0] * ss - self.screen_offset[0],
-              info[1] * ss - self.screen_offset[1], info[2])
+        tr = (car.width / 2 * ss, car.length / 2 * ss, info[0] * ss - self.screen_offset[0] + self.screen_size[0] / 2,
+              info[1] * ss - self.screen_offset[1] + self.screen_size[1] / 2, info[2])
         # First determine location and orientation
         points = list(map(lambda xy: transform(xy, tr), car.polylines))
         pygame.draw.lines(self.disp, car.color, True, points, 1)
@@ -151,7 +160,12 @@ class Animator:
         self.draw_grid()
         self.draw_intersections(t)
         self.draw_cars(t)
+        self.draw_texts()
+
+    def draw_texts(self):
         pass
+        # text = self.font.render("{}, {}".format(*self.screen_offset), False, (255,255,255))
+        # self.disp.blit(text, (0, 0))
 
     def event_loop(self):
         while True:
@@ -161,6 +175,8 @@ class Animator:
                     return
                 elif evt.type == pygame.MOUSEMOTION and evt.buttons[0] != 0:
                     self.drag(evt.rel)
+                elif evt.type == pygame.MOUSEMOTION and evt.buttons[2] != 0:
+                    self.zoom(evt.pos, evt.rel)
                     # print("Scree offste", self.screen_offset)
                 elif evt.type == pygame.MOUSEBUTTONDOWN:
                     if evt.button == 4:  # Scroll up
@@ -195,21 +211,28 @@ class Animator:
             y = max_y
         self.screen_offset = (x, y)
 
+    def zoom(self, pos, rel):
+        sx = self.screen_size[0] / 2 - pos[0]
+        sy = self.screen_size[1] / 2 - pos[1]
+        r0 = distance(sx, sy)
+        if r0 == 0:
+            return
+        r1 = distance(sx + rel[0], sy + rel[0])
+        self.screen_scale *= r0 / r1
+        x = self.screen_offset[0] + round(pos[0] * (r0 / r1 - 1))
+        y = self.screen_offset[1] + round(pos[1] * (r0 / r1 - 1))
+        self.screen_offset = (x, y)
+
     def zoom_in(self):
         # TODO: Math is not 100% correct
         scale_progression = 0.25
-        x = self.screen_offset[0] + self.screen_size[0] / 2 * scale_progression
-        y = self.screen_offset[1] + self.screen_size[1] / 2 * scale_progression
-        self.screen_offset = (x, y)
-        self.screen_scale = (1 + scale_progression) * self.screen_scale
+        self.screen_scale = 1.25 * self.screen_scale
+        x = self.screen_offset
 
     def zoom_out(self):
         # TODO: Check for scale and offset limits
-        scale_degression = 0.2  # 1/1.25 = 0.8
-        x = self.screen_offset[0] - self.screen_size[0] / 2 * scale_degression
-        y = self.screen_offset[1] - self.screen_size[1] / 2 * scale_degression
-        self.screen_offset = (x, y)
-        self.screen_scale = (1 - scale_degression) * self.screen_scale
+        # 1/1.25 = 0.8
+        self.screen_scale = 0.8 * self.screen_scale
 
 
 if __name__ == "__main__":

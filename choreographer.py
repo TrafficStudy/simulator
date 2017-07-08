@@ -32,12 +32,12 @@ class Car:
     def add_tl_to_end_queue(self, ts, od, olane):  # olane is same as lane
         x1 = ISEC_SIZE + ZEBRA_WIDTH + QZONE_LEN
         t1 = ts + x1 / INTERSECTION_SPEED
-        self.add_time_line_item(t1, DIR_POS(od ^ 2, (0.75 + olane) * LANE_WIDTH, x1), od ^ 2)
+        self.add_time_line_item(t1, DIR_POS(od ^ 2, (0.75 + olane) * LANE_WIDTH, -x1), od ^ 2)
 
     def add_tl_shift_back(self, ts, od):
         x0 = ISEC_SIZE + ZEBRA_WIDTH + QZONE_LEN + SZONE_LEN
         t0 = ts + x0 / INTERSECTION_SPEED
-        self.add_time_line_item(t0, DIR_POS(od ^ 2, 0.75 * LANE_WIDTH, x0), od ^ 2)
+        self.add_time_line_item(t0, DIR_POS(od ^ 2, 0.75 * LANE_WIDTH, -x0), od ^ 2)
 
     def add_tl_to_turn(self, ts, d, lane):
         dt = LANE_WIDTH / 2 / INTERSECTION_SPEED
@@ -53,7 +53,7 @@ class Car:
     def add_tl_to_qpos(self, ts, id, lane, pos):
         x = ISEC_SIZE + ZEBRA_WIDTH + QZONE_PER_CAR * pos
         t0 = ts - x / INTERSECTION_SPEED
-        self.add_time_line_item(t0, DIR_POS(id, (0.75 + lane) * LANE_WIDTH, x), id)
+        self.add_time_line_item(t0, DIR_POS(id, (0.75 + lane) * LANE_WIDTH, -x), id)
 
     def add_tl_finished(self, ts, id):
         self.add_time_line_item(ts, DIR_POS(id, 0.75 * LANE_WIDTH, 0), id)

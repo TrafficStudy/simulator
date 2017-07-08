@@ -254,7 +254,7 @@ class TrafficGrid:
                 iid = i + j * (m + 2)
                 if 0 < i < m + 1 and 0 < j < n + 1:
                     io = Intersection(iid, self)
-                    io.set_position(i * 400 - 200, j * 400 - 200)
+                    io.set_position(i * 400 - 800, j * 400 - 800)
                     io.assign_from_iid(0, iid - (m + 2))
                     io.assign_from_iid(1, iid - 1)
                     io.assign_from_iid(2, iid + (m + 2))
@@ -264,8 +264,8 @@ class TrafficGrid:
                     io.assign_to_iid(2, iid + (m + 2))
                     io.assign_to_iid(3, iid + 1)
                 else:
-                    pos_x = i * 400 - 200
-                    pos_y = j * 400 - 200
+                    pos_x = (i - 2) * 400
+                    pos_y = (j - 2) * 400
                     if (i == 0 or i == m + 1) and (j == 0 or j == n + 1):
                         continue  # Nothing at the corners
                     if i == 0:
