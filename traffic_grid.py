@@ -139,20 +139,22 @@ class Intersection:
             found_route = route
             break
 
-        red = self.light_state.is_red_at_time(ts, d)
-
+        is_red = self.light_state.is_red_at_time(ts, d)
         state = 0  # pass
-        if red:
-            ng = self.light_state.next_green(ts, d)
-            self.grid.add_event(EV_LIGHT_CHANGE, ng, (self.iid, (d & 1)))
+        if is_red:
+            next_green = self.light_state.next_green(ts, d)
+            self.grid.add_event(EV_LIGHT_CHANGE, next_green, (self.iid, (d & 1)))
 
         qid = found_route[0] + found_route[1] * self.n_from
-        if red or self.outgoing_queue[qid]:
+        if is_red or self.outgoing_queue[qid]:
+            print("Car {} stops at {}".format(cid, ts))
+            self.grid.car_last_stop[cid] = ts
             # Enter the queue and schedule a light_change event
             item = [ts, cid, found_route[0], found_route[1]]
             self.outgoing_queue[qid].append(item)  # Queue will take care of this care
             state = len(self.outgoing_queue[qid])
         else:
+            self.grid.count_waited += 1
             # No queue, just go through full speed
             print("Car {} passed intersection #{} fast, to {}".format(cid, self.iid,  DIRECTION_NAMES[found_route[1]]))
             self.go_to_next_intersection(ts, cid, found_route)
@@ -189,6 +191,10 @@ class Intersection:
             return
         item = self.outgoing_queue[qid].pop(0)
         self.go_to_next_intersection(ts, cid, self.qid_to_route[qid])
+        duration = ts - self.grid.car_last_stop[cid]
+        print("Car {} starts at {}, stopped for {}".format(cid, ts, duration))
+        self.grid.total_wait_time += duration
+        self.grid.count_waited += 1
         if self.outgoing_queue[qid]:
             cid = self.outgoing_queue[qid][0][1]
             self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_NEXT_DEQUEUE_DELAY,
@@ -230,6 +236,9 @@ class TrafficGrid:
             EV_DEQUEUE_GREEN: self.efn_dequeue_green,
         }
         self.choreographer = choreographer
+        self.car_last_stop = {}  # cid => ts of the last time car stops
+        self.total_wait_time = 0
+        self.count_waited = 0
 
     def load(self, file):
         with open(file, 'r') as fp:
@@ -370,4 +379,4 @@ if __name__ == "__main__":
     # tr.add_event(EV_CAR_ENTER_INTERSECTION, 1, (2, 11, 1))
     # tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
     tr.event_loop()
-    print("All finished")
+    print("All finished, average wait time per intersection = {}".format(tr.total_wait_time / tr.count_waited))
