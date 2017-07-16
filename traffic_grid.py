@@ -3,6 +3,7 @@ import random
 import copy
 import heapq
 from choreographer import Choreographer
+from light_state import LightState
 # import numpy as np
 
 # Terminology:
@@ -64,30 +65,6 @@ TS_FIRST_DEQUEUE_DELAY = 2
 TS_NEXT_DEQUEUE_DELAY = 2
 
 
-# This is the "basic light", which has a pair of connected red/gree lights
-class LightState:
-    def __init__(self):
-        super()
-        # period and start determines how lights change
-        self.period = 120  # Typical red light duration
-        self.half_period = 60
-        self.start = random.randint(0, 100)
-
-    def is_red_at_time(self, time, d):
-        start = self.start
-        if (d & 1) != 0:
-            start += self.half_period
-        return (time - start) % self.period < self.half_period
-
-    def next_green(self, time, d):
-        start = self.start
-        if (d & 1) != 0:
-            start += self.half_period
-
-        n_periods = int((time - start) / self.period)
-        return n_periods * self.period + self.half_period + start
-
-
 class Intersection:
     def __init__(self, iid, grid, mesh=STANDARD_4WAY_YIELD):
         super()
@@ -99,7 +76,6 @@ class Intersection:
         self.to_iids = [None] * self.n_to
         self.to_dir_lookup = [2, 3, 0, 1]  # Leaving 0, arriving 2 etc.
         self.mesh = copy.deepcopy(mesh)
-        self.light_state = None
         self.intersection_state = None
         self.outgoing_queue = [[] for i in range(self.n_from * self.n_to)]  # include uturn
         self.light_state = LightState()
