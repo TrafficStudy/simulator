@@ -11,7 +11,7 @@ from light_state import LightState
 #        or an external source
 #   CID: Car ID, uniquely identify a car
 
-# Traffic is awesome
+# Traffic is very awesome
 #              |
 #             (0)
 #              |
