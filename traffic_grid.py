@@ -355,4 +355,4 @@ if __name__ == "__main__":
     # tr.add_event(EV_CAR_ENTER_INTERSECTION, 1, (2, 11, 1))
     # tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
     tr.event_loop()
-    print("All finished, average wait time per intersection = {}".format(tr.total_wait_time / tr.count_waited))
+    print("All finished, average wait time per intersection = {0:.2f}".format(tr.total_wait_time / tr.count_waited))

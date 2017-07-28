@@ -1,6 +1,6 @@
 import random
 
-# This is the "basic light", which has a pair of connected red/gree lights
+# This is the "basic light", which has a pair of connected red/green lights
 class LightState:
     def __init__(self):
         super()
@@ -8,16 +8,16 @@ class LightState:
         self.period = 120  # Typical red light duration
         self.half_period = 60
         self.start = random.randint(0, 100)
-
+    # gets the start time, checks if
     def is_red_at_time(self, time, d):
         start = self.start
-        if (d & 1) != 0:
+        if (d & 1):
             start += self.half_period
         return (time - start) % self.period < self.half_period
 
     def next_green(self, time, d):
         start = self.start
-        if (d & 1) != 0:
+        if (d & 1):
             start += self.half_period
 
         n_periods = int((time - start) / self.period)
