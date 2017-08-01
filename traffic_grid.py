@@ -11,7 +11,7 @@ from light_state import LightState
 #        or an external source
 #   CID: Car ID, uniquely identify a car
 
-# Traffic is awesome
+#
 #              |
 #             (0)
 #              |
@@ -32,18 +32,18 @@ YIELD_LEFT = 4  # Green: yield_go(2), Red/Yellow: Wait
 # From#, To#, Probability to take, probablility to stop, time_to_travel,
 # behavior (based on green/red)
 STANDARD_4WAY_YIELD = [
-    [0, 1, 0.05, 0, 100, DEFAULT_RIGHT],
-    [0, 2, 0.90, 0, 100, DEFAULT],
-    [0, 3, 0.05, 0, 100, YIELD_LEFT],
-    [1, 0, 0.05, 0, 100, YIELD_LEFT],
-    [1, 3, 0.90, 0, 100, DEFAULT],
-    [1, 2, 0.05, 0, 100, DEFAULT_RIGHT],
-    [2, 1, 0.05, 0, 100, YIELD_LEFT],
-    [2, 0, 0.90, 0, 100, DEFAULT],
-    [2, 3, 0.05, 0, 100, DEFAULT_RIGHT],
-    [3, 0, 0.05, 0, 100, DEFAULT_RIGHT],
-    [3, 1, 0.90, 0, 100, DEFAULT],
-    [3, 2, 0.05, 0, 100, YIELD_LEFT],
+    [0, 1, 0.15, 0, 100, DEFAULT_RIGHT],
+    [0, 2, 0.70, 0, 100, DEFAULT],
+    [0, 3, 0.15, 0, 100, YIELD_LEFT],
+    [1, 0, 0.15, 0, 100, YIELD_LEFT],
+    [1, 3, 0.70, 0, 100, DEFAULT],
+    [1, 2, 0.15, 0, 100, DEFAULT_RIGHT],
+    [2, 1, 0.15, 0, 100, YIELD_LEFT],
+    [2, 0, 0.70, 0, 100, DEFAULT],
+    [2, 3, 0.15, 0, 100, DEFAULT_RIGHT],
+    [3, 0, 0.15, 0, 100, DEFAULT_RIGHT],
+    [3, 1, 0.70, 0, 100, DEFAULT],
+    [3, 2, 0.15, 0, 100, YIELD_LEFT],
 ]
 
 # Events
