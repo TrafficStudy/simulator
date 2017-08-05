@@ -287,7 +287,7 @@ class TrafficGrid:
     def event_loop(self):
         while len(self.events) > 0:
             ev = heapq.heappop(self.events)
-            self.print_event(ev)
+            #self.print_event(ev)
             self.last_event_ts = ev[0]
             fn = self.event_handlers[ev[1]]
             if fn:

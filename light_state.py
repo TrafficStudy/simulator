@@ -5,8 +5,8 @@ class LightState:
     def __init__(self):
         super()
         # period and start determines how lights change
-        self.period = 120  # Typical red light duration
-        self.half_period = 60
+        self.period = 1000000  # Typical red light duration
+        self.half_period = 500000
         self.start = random.randint(0, 100)
     # gets the start time, checks if
     def is_red_at_time(self, time, d):
