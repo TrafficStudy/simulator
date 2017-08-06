@@ -24,8 +24,6 @@ from light_state import LightState
 
 DIRECTION_NAMES = ['North', 'West', 'South', 'East']
 
-#brion mac test
-#dang okay
 # Behavior names
 DEFAULT_RIGHT = 1  # Means: Green: go, Red/Yellow: Stop and then yield_go(1)
 DEFAULT = 2  # Green: go, Red/Yellow: Wait
