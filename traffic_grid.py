@@ -25,6 +25,7 @@ from light_state import LightState
 
 counter = 0
 list_number = 2  # will be used later at the end of the loop
+# list_number is the number of times the program is going to run
 total_wait_time = 0
 wait_time_list = []
 
@@ -400,4 +401,5 @@ class Statistics:
 
 """Sonny's notes:
 I finished doing the statistics. This includes the mean, median, variance,
-sample standard deviation, and mode."""
+sample standard deviation, and mode. list_number is the number of times the 
+program is going to run."""
