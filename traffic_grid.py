@@ -24,7 +24,7 @@ from light_state import LightState
 #              |
 
 counter = 0
-list_number = 2  # will be used later at the end of the loop
+list_number = 5  # will be used later at the end of the loop
 # list_number is the number of times the program is going to run
 total_wait_time = 0
 wait_time_list = []
@@ -380,6 +380,13 @@ class Statistics:
     print("Total wait time in %d runs:" % list_number, total_wait_time)
     print(wait_time_list)
 
+    wait_time_list.sort()
+    minimum = wait_time_list[0]
+    maximum = wait_time_list[list_number - 1]
+
+    print("The minimum is:", minimum)
+    print("The maximum is:", maximum)
+
     arithmetic_mean = total_wait_time / list_number
     print("The mean is:", arithmetic_mean)
 
@@ -400,6 +407,6 @@ class Statistics:
 
 
 """Sonny's notes:
-I finished doing the statistics. This includes the mean, median, variance,
+I finished doing the statistics. This includes the minimum and maximum, mean, median, variance,
 sample standard deviation, and mode. list_number is the number of times the 
 program is going to run."""
