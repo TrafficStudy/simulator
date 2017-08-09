@@ -356,4 +356,5 @@ if __name__ == "__main__":
     # tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
     tr.event_loop()
     print("All finished, average wait time per intersection = {0:.2f}".format(tr.total_wait_time / tr.count_waited))
-#this is not working
+    #this is not working
+    #why do i exist
