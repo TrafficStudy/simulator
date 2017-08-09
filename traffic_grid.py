@@ -409,4 +409,7 @@ class Statistics:
 """Sonny's notes:
 I finished doing the statistics. This includes the minimum and maximum, mean, median, variance,
 sample standard deviation, and mode. list_number is the number of times the 
-program is going to run."""
+program is going to run.
+"""
+
+ #what is life
