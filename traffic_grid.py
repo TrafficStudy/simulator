@@ -358,3 +358,4 @@ if __name__ == "__main__":
     print("All finished, average wait time per intersection = {0:.2f}".format(tr.total_wait_time / tr.count_waited))
 #cats are nice???????
 #what is life
+#this is not working
