@@ -412,4 +412,4 @@ sample standard deviation, and mode. list_number is the number of times the
 program is going to run.
 """
 
- #what is life
+ #what is life cats are nice
