@@ -406,5 +406,5 @@ program is going to run.
 """
 """Brion's notes:
 Removed variance (redundant with stddev) and mode (near impossible with floats),
-allowed toggling of display of events in each sample run
+allowed toggling of display of events in each sample run.
 """
