@@ -23,8 +23,10 @@ from light_state import LightState
 #             (2)
 #              |
 
+ptestdata = 0 #determines whether to show specific events in each sample run
+
 counter = 0
-list_number = 5  # will be used later at the end of the loop
+list_number = 3  # will be used later at the end of the loop
 # list_number is the number of times the program is going to run
 total_wait_time = 0
 wait_time_list = []
@@ -33,8 +35,6 @@ while counter < list_number:  # 2 -> program runs 2 consecutive times
 
     DIRECTION_NAMES = ['North', 'West', 'South', 'East']
 
-    #brion mac test
-    #dang okay
     # Behavior names
     DEFAULT_RIGHT = 1  # Means: Green: go, Red/Yellow: Stop and then yield_go(1)
     DEFAULT = 2  # Green: go, Red/Yellow: Wait
@@ -134,7 +134,7 @@ while counter < list_number:  # 2 -> program runs 2 consecutive times
 
             qid = found_route[0] + found_route[1] * self.n_from
             if is_red or self.outgoing_queue[qid]:
-                print("Car {} stops at {}".format(cid, ts))
+                if ptestdata: print("Car {} stops at {}".format(cid, ts))
                 self.grid.car_last_stop[cid] = ts
                 # Enter the queue and schedule a light_change event
                 item = [ts, cid, found_route[0], found_route[1]]
@@ -143,7 +143,7 @@ while counter < list_number:  # 2 -> program runs 2 consecutive times
             else:
                 self.grid.count_waited += 1
                 # No queue, just go through full speed
-                print("Car {} passed intersection #{} fast, to {}".format(cid, self.iid,  DIRECTION_NAMES[found_route[1]]))
+                if ptestdata: print("Car {} passed intersection #{} fast, to {}".format(cid, self.iid,  DIRECTION_NAMES[found_route[1]]))
                 self.go_to_next_intersection(ts, cid, found_route)
             return (found_route[1], state)
 
@@ -179,7 +179,6 @@ while counter < list_number:  # 2 -> program runs 2 consecutive times
             item = self.outgoing_queue[qid].pop(0)
             self.go_to_next_intersection(ts, cid, self.qid_to_route[qid])
             duration = ts - self.grid.car_last_stop[cid]
-            print("Car {} starts at {}, stopped for {}".format(cid, ts, duration))
             self.grid.total_wait_time += duration
             self.grid.count_waited += 1
             if self.outgoing_queue[qid]:
@@ -293,7 +292,7 @@ while counter < list_number:  # 2 -> program runs 2 consecutive times
             msg = "{:-3d}: ".format(ev[0]) + fmt.format(*ev[2])
             for d in range(4):
                 msg = msg.replace('direction{}'.format(d), DIRECTION_NAMES[d])
-            print(msg)
+            if ptestdata: print(msg)
 
         def event_loop(self):
             while len(self.events) > 0:
@@ -369,7 +368,7 @@ while counter < list_number:  # 2 -> program runs 2 consecutive times
         # tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
         tr.event_loop()
         average_wait_time = tr.total_wait_time / tr.count_waited
-        finished_message = print("All finished, average wait time per intersection = {}".format(average_wait_time))
+        if ptestdata: print("All finished, average wait time per intersection = {}".format(average_wait_time))
 
     total_wait_time += average_wait_time
     wait_time_list.append(average_wait_time)
@@ -393,17 +392,11 @@ class Statistics:
     median = statistics.median(wait_time_list)
     print("The median is:", median)
 
-    variance = statistics.variance(wait_time_list, arithmetic_mean)
-    print("The variance is:", variance)
-
-    sample_standard_deviation = statistics.stdev(wait_time_list, arithmetic_mean)
-    print("The sample standard deviation is:", sample_standard_deviation)
-
     try:
-        mode = statistics.mode(wait_time_list)
-        print("The mode is:", mode)
+        sample_standard_deviation = statistics.stdev(wait_time_list, arithmetic_mean)
+        print("The standard deviation is:", sample_standard_deviation)
     except statistics.StatisticsError:
-        print("The mode is:", None)
+        print("The standard deviation is: N/A")
 
 
 """Sonny's notes:
@@ -411,5 +404,7 @@ I finished doing the statistics. This includes the minimum and maximum, mean, me
 sample standard deviation, and mode. list_number is the number of times the 
 program is going to run.
 """
-
- #what is life cats are nice
+"""Brion's notes:
+Removed variance (redundant with stddev) and mode (near impossible with floats),
+allowed toggling of display of events in each sample run
+"""
