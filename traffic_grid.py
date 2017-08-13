@@ -26,7 +26,7 @@ from light_state import LightState
 ptestdata = 0 #determines whether to show specific events in each sample run
 
 counter = 0
-list_number = 3  # will be used later at the end of the loop
+list_number = 100  # will be used later at the end of the loop
 # list_number is the number of times the program is going to run
 total_wait_time = 0
 wait_time_list = []
@@ -377,34 +377,18 @@ while counter < list_number:  # 2 -> program runs 2 consecutive times
 
 class Statistics:
     print("Total wait time in %d runs:" % list_number, total_wait_time)
-    print(wait_time_list)
+    if ptestdata: print(wait_time_list)
 
     wait_time_list.sort()
-    minimum = wait_time_list[0]
-    maximum = wait_time_list[list_number - 1]
 
-    print("The minimum is:", minimum)
-    print("The maximum is:", maximum)
-
+    print("The minimum is:", wait_time_list[0])
+    print("The maximum is:", wait_time_list[list_number - 1])
     arithmetic_mean = total_wait_time / list_number
     print("The mean is:", arithmetic_mean)
 
-    median = statistics.median(wait_time_list)
-    print("The median is:", median)
+    print("The median is:", statistics.median(wait_time_list))
 
     try:
-        sample_standard_deviation = statistics.stdev(wait_time_list, arithmetic_mean)
-        print("The standard deviation is:", sample_standard_deviation)
+        print("The standard deviation is:", statistics.stdev(wait_time_list, arithmetic_mean))
     except statistics.StatisticsError:
         print("The standard deviation is: N/A")
-
-
-"""Sonny's notes:
-I finished doing the statistics. This includes the minimum and maximum, mean, median, variance,
-sample standard deviation, and mode. list_number is the number of times the 
-program is going to run.
-"""
-"""Brion's notes:
-Removed variance (redundant with stddev) and mode (near impossible with floats),
-allowed toggling of display of events in each sample run.
-"""
