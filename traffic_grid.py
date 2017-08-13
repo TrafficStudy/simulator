@@ -329,7 +329,7 @@ class TrafficGrid:
             id = qid % n_from
             od = int(qid / n_from)  # od is out_going direction
             self.choreographer.car_dequeue_event(ts, cid, iid, id, od)
-
+ #
 
 if __name__ == "__main__":
     # random.seed(100)  # Deterministic random numbers
