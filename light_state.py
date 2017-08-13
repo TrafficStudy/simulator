@@ -1,7 +1,7 @@
 import random
 
 # This is the "basic light", which has a pair of connected red/green lights
-class LightState:
+class LightState1:
     def __init__(self):
         super()
         # period and start determines how lights change
