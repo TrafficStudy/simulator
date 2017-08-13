@@ -21,7 +21,7 @@ from light_state import LightState
 #              |
 #             (2)
 #              |
-
+ptestdata = 0  # determines whether to show specific events in each sample run
 DIRECTION_NAMES = ['North', 'West', 'South', 'East']
 
 # Behavior names
@@ -363,10 +363,11 @@ class TrafficGrid:
         total_wait_time += average_wait_time
         wait_time_list.append(average_wait_time)
         counter += 1
+        return counter, total_wait_time, wait_time_list
 
 
 class Statistics:
-    ptestdata = 0  # determines whether to show specific events in each sample run
+
     counter = 0
     list_number = 100  # will be used later at the end of the loop
     # list_number is the number of times the program is going to run
@@ -374,7 +375,7 @@ class Statistics:
     wait_time_list = []
 
     while counter < list_number:  # 2 -> program runs 2 consecutive times
-        TrafficGrid.master_run(1, counter, total_wait_time, wait_time_list, ptestdata)
+        counter, total_wait_time, wait_time_list = TrafficGrid.master_run(1, counter, total_wait_time, wait_time_list, ptestdata)
     print("Total wait time in %d runs:" % list_number, total_wait_time)
     if ptestdata: print(wait_time_list)
 
