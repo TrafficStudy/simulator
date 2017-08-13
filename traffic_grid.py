@@ -337,7 +337,7 @@ while counter < list_number:  # 2 -> program runs 2 consecutive times
                 id = qid % n_from
                 od = int(qid / n_from)  # od is out_going direction
                 self.choreographer.car_dequeue_event(ts, cid, iid, id, od)
-
+#cat
 
     if __name__ == "__main__":
         """the variable, __name__, is converted to the string "__main__" when the program
