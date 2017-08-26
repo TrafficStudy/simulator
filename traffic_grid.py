@@ -81,7 +81,7 @@ class Intersection:
         self.qid_to_route = self.build_qid_lookup()
         self.pos_x = 0
         self.pos_y = 0
-        self.light_state = LightState(self.n_from, self.n_to, copy.copy(self.outgoing_queue))
+        self.light_state = LightState(self.n_from, self.n_to, self.outgoing_queue)
 
     def set_position(self, x, y):
         self.pos_x = x
@@ -114,13 +114,12 @@ class Intersection:
                 continue
             found_route = route
             break
-        is_red = self.light_state.is_red_at_time(ts, d)
+        qid = found_route[0] + found_route[1] * self.n_from
+        is_red = self.light_state.is_red_at_time(ts, d, qid)
         state = 0  # pass
         if is_red:
             next_green = self.light_state.next_green(ts, d)
             self.grid.add_event(EV_LIGHT_CHANGE, next_green, (self.iid, (d & 1)))
-
-        qid = found_route[0] + found_route[1] * self.n_from
         if is_red or self.outgoing_queue[qid]:
             if ptestdata: print("Car {} stops at {}".format(cid, ts))
             self.grid.car_last_stop[cid] = ts
@@ -369,7 +368,7 @@ class TrafficGrid:
 class Statistics:
 
     counter = 0
-    list_number = 3  # will be used later at the end of the loop
+    list_number = 100 # will be used later at the end of the loop
     # list_number is the number of times the program is going to run
     total_wait_time = 0
     wait_time_list = []
