@@ -78,10 +78,10 @@ class Intersection:
         self.mesh = copy.deepcopy(mesh)
         self.intersection_state = None
         self.outgoing_queue = [[] for i in range(self.n_from * self.n_to)]  # include uturn
-        self.light_state = LightState()
         self.qid_to_route = self.build_qid_lookup()
         self.pos_x = 0
         self.pos_y = 0
+        self.light_state = LightState(self.n_from,self.n_to)
 
     def set_position(self, x, y):
         self.pos_x = x
@@ -114,7 +114,6 @@ class Intersection:
                 continue
             found_route = route
             break
-
         is_red = self.light_state.is_red_at_time(ts, d)
         state = 0  # pass
         if is_red:
@@ -127,12 +126,13 @@ class Intersection:
             self.grid.car_last_stop[cid] = ts
             # Enter the queue and schedule a light_change event
             item = [ts, cid, found_route[0], found_route[1]]
-            self.outgoing_queue[qid].append(item)  # Queue will take care of this care
+            self.outgoing_queue[qid].append(item)  # Queue will take care of this car
             state = len(self.outgoing_queue[qid])
         else:
             self.grid.count_waited += 1
             # No queue, just go through full speed
-            if ptestdata: print("Car {} passed intersection #{} fast, to {}".format(cid, self.iid,  DIRECTION_NAMES[found_route[1]]))
+            if ptestdata: print("Car {} passed intersection #{} fast, to {}".format(cid, self.iid,
+                                                DIRECTION_NAMES[found_route[1]]))
             self.go_to_next_intersection(ts, cid, found_route)
         return (found_route[1], state)
 
@@ -369,7 +369,7 @@ class TrafficGrid:
 class Statistics:
 
     counter = 0
-    list_number = 100  # will be used later at the end of the loop
+    list_number = 3  # will be used later at the end of the loop
     # list_number is the number of times the program is going to run
     total_wait_time = 0
     wait_time_list = []

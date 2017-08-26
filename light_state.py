@@ -2,7 +2,8 @@ import random
 
 # This is the "basic light", which has a pair of connected red/green lights
 class LightState1:
-    def __init__(self):
+
+    def __init__(self,n_from,n_to):
         super()
         # period and start determines how lights change
         self.period = 120  # Typical red light duration
