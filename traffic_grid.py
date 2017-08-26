@@ -81,7 +81,7 @@ class Intersection:
         self.qid_to_route = self.build_qid_lookup()
         self.pos_x = 0
         self.pos_y = 0
-        self.light_state = LightState(self.n_from,self.n_to)
+        self.light_state = LightState(self.n_from, self.n_to, copy.copy(self.outgoing_queue))
 
     def set_position(self, x, y):
         self.pos_x = x

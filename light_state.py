@@ -3,13 +3,13 @@ import random
 # This is the "basic light", which has a pair of connected red/green lights
 class LightState1:
 
-    def __init__(self,n_from,n_to):
+    def __init__(self, n_from, n_to, out_going_queue):
         super()
         # period and start determines how lights change
         self.period = 120  # Typical red light duration
         self.half_period = 60
-        self.start = 0
-        # self.start = random.randint(0, 100)
+        self.start = random.randint(0, 100)
+
 
     def is_red_at_time(self, time, d):
         start = self.start
