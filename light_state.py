@@ -1,5 +1,4 @@
 import random
-import copy
 
 # This is the "basic light", which has a pair of connected red/green lights
 class LightState:
@@ -30,7 +29,7 @@ class LightState:
 class LightState1(LightState):
 
     def is_red_at_time(self, time, d, qid):
-        if len(self.itn.out_going_queue[qid]) >= 10:
+        if len(self.itn.outgoing_queue[qid]) >= 10:
             self.start = time
         start = self.start
         if (d & 1) != 0:

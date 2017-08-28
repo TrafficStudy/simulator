@@ -4,7 +4,7 @@ import copy
 import heapq
 import statistics
 from choreographer import Choreographer
-from light_state import LightState as LightState
+from light_state import LightState1 as LightState
 # import numpy as np
 
 # Terminology:
@@ -326,11 +326,6 @@ class TrafficGrid:
             od = int(qid / n_from)  # od is out_going direction
             self.choreographer.car_dequeue_event(ts, cid, iid, id, od)
 
-
-# if __name__ == "__main__":
-#     """the variable, __name__, is converted to the string "__main__" when the program
-# is run in the original file - meaning it doesn't get run when imported into a different file"""
-    # random.seed(100)  # Deterministic random numbers
     def master_run(method_num, counter, total_wait_time, wait_time_list, ptestdata):
         tr = TrafficGrid()
         tr.choreographer = Choreographer(tr)
@@ -366,7 +361,7 @@ class TrafficGrid:
 
 
 class Statistics:
-
+    random.seed(5) # deterministic randomness
     counter = 0
     list_number = 50 # number of times the program is going to run
     total_wait_time = 0
