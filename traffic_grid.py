@@ -4,7 +4,7 @@ import copy
 import heapq
 import statistics
 from choreographer import Choreographer
-from light_state import LightState1 as LightState
+from light_state import LightState as LightState
 # import numpy as np
 
 # Terminology:
@@ -81,7 +81,7 @@ class Intersection:
         self.qid_to_route = self.build_qid_lookup()
         self.pos_x = 0
         self.pos_y = 0
-        self.light_state = LightState(self.n_from, self.n_to, self.outgoing_queue)
+        self.light_state = LightState(self)
 
     def set_position(self, x, y):
         self.pos_x = x
@@ -368,8 +368,7 @@ class TrafficGrid:
 class Statistics:
 
     counter = 0
-    list_number = 100 # will be used later at the end of the loop
-    # list_number is the number of times the program is going to run
+    list_number = 50 # number of times the program is going to run
     total_wait_time = 0
     wait_time_list = []
 
