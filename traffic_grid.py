@@ -326,38 +326,7 @@ class TrafficGrid:
             od = int(qid / n_from)  # od is out_going direction
             self.choreographer.car_dequeue_event(ts, cid, iid, id, od)
 
-def master_run(counter, total_wait_time, wait_time_list, ptestdata):
-    tr = TrafficGrid()
-    tr.choreographer = Choreographer(tr)
-    tr.generate_grid(3, 3)
-    # In this 3x3 grid example:
-    #     1   2   3
-    #     |   |   |
-    #  5--6---7---8---9
-    #     |   |   |
-    # 10--11--12--13--14
-    #     |   |   |
-    # 15--16--17--18--19
-    #     |   |   |
-    #     21  22  23
 
-    last_ts = 0
-    inlet_array = [1, 2, 3, 5, 9, 10, 14, 15, 19, 21, 22, 23]
-    for i in range(100):
-        last_ts += random.randint(0, 100)
-        inlet = tr.intersections[random.choice(inlet_array)]
-        tr.add_event(EV_CAR_ENTER_INTERSECTION, last_ts, (i, inlet.to_iid, inlet.to_dir))
-    # tr.add_event(EV_CAR_ENTER_INTERSECTION, 0, (1, 7, 0))
-    # tr.add_event(EV_CAR_ENTER_INTERSECTION, 1, (2, 11, 1))
-    # tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
-    tr.event_loop()
-    average_wait_time = tr.total_wait_time / tr.count_waited
-    if ptestdata: print("All finished, average wait time per intersection = {}".format(average_wait_time))
-
-    total_wait_time += average_wait_time
-    wait_time_list.append(average_wait_time)
-    counter += 1
-    return counter, total_wait_time, wait_time_list
 
 
 class Statistics:
@@ -367,21 +336,59 @@ class Statistics:
     total_wait_time = 0
     wait_time_list = []
 
-    while counter < list_number:  # 2 -> program runs 2 consecutive times
-        counter, total_wait_time, wait_time_list = master_run(counter, total_wait_time, wait_time_list, ptestdata)
-    print("Total wait time in %d runs:" % list_number, total_wait_time)
-    if ptestdata: print(wait_time_list)
+    def test(self):
+        while self.counter < self.list_number:  # 2 -> program runs 2 consecutive times
+            self.master_run()
+        print("Total wait time in %d runs:" % self.list_number, self.total_wait_time)
+        if ptestdata: print(self.wait_time_list)
+    
+        self.wait_time_list.sort()
+    
+        print("The minimum is:", self.wait_time_list[0])
+        print("The maximum is:", self.wait_time_list[self.list_number - 1])
+        arithmetic_mean = self.total_wait_time / self.list_number
+        print("The mean is:", arithmetic_mean)
+    
+        print("The median is:", statistics.median(self.wait_time_list))
+    
+        try:
+            print("The standard deviation is:",
+                  statistics.stdev(self.wait_time_list, arithmetic_mean))
+        except statistics.StatisticsError:
+            print("The standard deviation is: N/A")
+    
+    def master_run(self):
+        tr = TrafficGrid()
+        tr.choreographer = Choreographer(tr)
+        tr.generate_grid(3, 3)
+        # In this 3x3 grid example:
+        #     1   2   3
+        #     |   |   |
+        #  5--6---7---8---9
+        #     |   |   |
+        # 10--11--12--13--14
+        #     |   |   |
+        # 15--16--17--18--19
+        #     |   |   |
+        #     21  22  23
+    
+        last_ts = 0
+        inlet_array = [1, 2, 3, 5, 9, 10, 14, 15, 19, 21, 22, 23]
+        for i in range(100):
+            last_ts += random.randint(0, 100)
+            inlet = tr.intersections[random.choice(inlet_array)]
+            tr.add_event(EV_CAR_ENTER_INTERSECTION, last_ts, (i, inlet.to_iid, inlet.to_dir))
+        # tr.add_event(EV_CAR_ENTER_INTERSECTION, 0, (1, 7, 0))
+        # tr.add_event(EV_CAR_ENTER_INTERSECTION, 1, (2, 11, 1))
+        # tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
+        tr.event_loop()
+        average_wait_time = tr.total_wait_time / tr.count_waited
+        if ptestdata: print("Finished. Average wait = {}".format(average_wait_time))
+        self.total_wait_time += average_wait_time
+        self.wait_time_list.append(average_wait_time)
+        self.counter += 1
+        return self.counter, self.total_wait_time, self.wait_time_list
 
-    wait_time_list.sort()
-
-    print("The minimum is:", wait_time_list[0])
-    print("The maximum is:", wait_time_list[list_number - 1])
-    arithmetic_mean = total_wait_time / list_number
-    print("The mean is:", arithmetic_mean)
-
-    print("The median is:", statistics.median(wait_time_list))
-
-    try:
-        print("The standard deviation is:", statistics.stdev(wait_time_list, arithmetic_mean))
-    except statistics.StatisticsError:
-        print("The standard deviation is: N/A")
+if __name__ == "__main__":
+    s = Statistics()
+    s.test()
