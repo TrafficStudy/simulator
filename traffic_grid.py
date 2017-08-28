@@ -21,7 +21,7 @@ from light_state import LightState1 as LightState
 #              |
 #             (2)
 #              |
-ptestdata = 0  # determines whether to show specific events in each sample run
+ptestdata = 1  # determines whether to show specific events in each sample run
 DIRECTION_NAMES = ['North', 'West', 'South', 'East']
 
 # Behavior names
@@ -326,49 +326,49 @@ class TrafficGrid:
             od = int(qid / n_from)  # od is out_going direction
             self.choreographer.car_dequeue_event(ts, cid, iid, id, od)
 
-    def master_run(method_num, counter, total_wait_time, wait_time_list, ptestdata):
-        tr = TrafficGrid()
-        tr.choreographer = Choreographer(tr)
-        tr.generate_grid(3, 3)
-        # In this 3x3 grid example:
-        #     1   2   3
-        #     |   |   |
-        #  5--6---7---8---9
-        #     |   |   |
-        # 10--11--12--13--14
-        #     |   |   |
-        # 15--16--17--18--19
-        #     |   |   |
-        #     21  22  23
+def master_run(counter, total_wait_time, wait_time_list, ptestdata):
+    tr = TrafficGrid()
+    tr.choreographer = Choreographer(tr)
+    tr.generate_grid(3, 3)
+    # In this 3x3 grid example:
+    #     1   2   3
+    #     |   |   |
+    #  5--6---7---8---9
+    #     |   |   |
+    # 10--11--12--13--14
+    #     |   |   |
+    # 15--16--17--18--19
+    #     |   |   |
+    #     21  22  23
 
-        last_ts = 0
-        inlet_array = [1, 2, 3, 5, 9, 10, 14, 15, 19, 21, 22, 23]
-        for i in range(100):
-            last_ts += random.randint(0, 100)
-            inlet = tr.intersections[random.choice(inlet_array)]
-            tr.add_event(EV_CAR_ENTER_INTERSECTION, last_ts, (i, inlet.to_iid, inlet.to_dir))
-        # tr.add_event(EV_CAR_ENTER_INTERSECTION, 0, (1, 7, 0))
-        # tr.add_event(EV_CAR_ENTER_INTERSECTION, 1, (2, 11, 1))
-        # tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
-        tr.event_loop()
-        average_wait_time = tr.total_wait_time / tr.count_waited
-        if ptestdata: print("All finished, average wait time per intersection = {}".format(average_wait_time))
+    last_ts = 0
+    inlet_array = [1, 2, 3, 5, 9, 10, 14, 15, 19, 21, 22, 23]
+    for i in range(100):
+        last_ts += random.randint(0, 100)
+        inlet = tr.intersections[random.choice(inlet_array)]
+        tr.add_event(EV_CAR_ENTER_INTERSECTION, last_ts, (i, inlet.to_iid, inlet.to_dir))
+    # tr.add_event(EV_CAR_ENTER_INTERSECTION, 0, (1, 7, 0))
+    # tr.add_event(EV_CAR_ENTER_INTERSECTION, 1, (2, 11, 1))
+    # tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
+    tr.event_loop()
+    average_wait_time = tr.total_wait_time / tr.count_waited
+    if ptestdata: print("All finished, average wait time per intersection = {}".format(average_wait_time))
 
-        total_wait_time += average_wait_time
-        wait_time_list.append(average_wait_time)
-        counter += 1
-        return counter, total_wait_time, wait_time_list
+    total_wait_time += average_wait_time
+    wait_time_list.append(average_wait_time)
+    counter += 1
+    return counter, total_wait_time, wait_time_list
 
 
 class Statistics:
     random.seed(5) # deterministic randomness
     counter = 0
-    list_number = 50 # number of times the program is going to run
+    list_number = 1 # number of times the program is going to run
     total_wait_time = 0
     wait_time_list = []
 
     while counter < list_number:  # 2 -> program runs 2 consecutive times
-        counter, total_wait_time, wait_time_list = TrafficGrid.master_run(1, counter, total_wait_time, wait_time_list, ptestdata)
+        counter, total_wait_time, wait_time_list = master_run(counter, total_wait_time, wait_time_list, ptestdata)
     print("Total wait time in %d runs:" % list_number, total_wait_time)
     if ptestdata: print(wait_time_list)
 
