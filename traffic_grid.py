@@ -4,7 +4,7 @@ import copy
 import heapq
 import statistics
 from choreographer import Choreographer
-from light_state import LightState1 as LightState
+from light_state import LightState as LightState
 # import numpy as np
 
 # Terminology:
@@ -117,9 +117,6 @@ class Intersection:
         qid = found_route[0] + found_route[1] * self.n_from
         is_red = self.light_state.is_red_at_time(ts, d, qid)
         state = 0  # pass
-        if is_red:
-            next_green = self.light_state.next_green(ts, d)
-            self.grid.add_event(EV_LIGHT_CHANGE, next_green, (self.iid, (d & 1)))
         if is_red or self.outgoing_queue[qid]:
             if ptestdata: print("Car {} stops at {}".format(cid, ts))
             self.grid.car_last_stop[cid] = ts
