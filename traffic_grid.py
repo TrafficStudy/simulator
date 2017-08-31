@@ -329,8 +329,6 @@ class TrafficGrid:
             self.choreographer.car_dequeue_event(ts, cid, iid, id, od)
 
 
-
-
 class Statistics:
     random.seed(5) # deterministic randomness
     counter = 0
@@ -389,7 +387,6 @@ class Statistics:
         self.total_wait_time += average_wait_time
         self.wait_time_list.append(average_wait_time)
         self.counter += 1
-        return self.counter, self.total_wait_time, self.wait_time_list
 
 if __name__ == "__main__":
     s = Statistics()
