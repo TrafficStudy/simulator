@@ -246,6 +246,7 @@ class TrafficGrid:
                     io.assign_to_iid(1, iid - 1)
                     io.assign_to_iid(2, iid + (m + 2))
                     io.assign_to_iid(3, iid + 1)
+                # this section deals with inlets (NOTE: only inlets are at the edges of the grid
                 else:
                     pos_x = (i - 2) * 400
                     pos_y = (j - 2) * 400
@@ -282,13 +283,14 @@ class TrafficGrid:
             msg = msg.replace('direction{}'.format(d), DIRECTION_NAMES[d])
         if ptestdata: print(msg)
 
+    # this might be a short function but it's the method that makes this whole thing run
     def event_loop(self):
         while len(self.events) > 0:
             ev = heapq.heappop(self.events)
             self.print_event(ev)
             self.last_event_ts = ev[0]
             fn = self.event_handlers[ev[1]]
-            if fn:
+            if fn is not None:
                 fn(ev[0], ev[2])
 
     # Payload is [cid, toIID, direction]
