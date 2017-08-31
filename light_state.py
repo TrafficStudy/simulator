@@ -1,5 +1,10 @@
 import random
 
+EV_CAR_STOPPED = 1
+EV_CAR_ENTER_INTERSECTION = 2
+EV_LIGHT_CHANGE = 3
+EV_DEQUEUE_GREEN = 4  # This is the slow de-queuing of a light just turned green
+
 # This is the "basic light", which has a pair of connected red/green lights
 class LightState:
 
@@ -20,7 +25,7 @@ class LightState:
         fin_state = not ((time - start) % self.period < self.half_period)
         if fin_state != self.state:
             self.state = fin_state
-            self.itn.light_change(time, fin_state)
+            self.itn.grid.add_event(EV_LIGHT_CHANGE, time, (fin_state, self.itn.iid))
         return fin_state
 
 # Smarter cycle light that resets the cycle whenever a queue reaches over 10 cars

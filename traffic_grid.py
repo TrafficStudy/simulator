@@ -56,7 +56,7 @@ EVENT_FORMAT_STRINGS = [
     "",
     "Car {0} stopped after passing intersection #{1}",
     "Car {0} approaches intersection #{1} from direction{2}",
-    "Light changes at intersection #{0}",
+    "Light changes at intersection #{1}: now{0}",
     "Car {0} leaves intersection #{1} slowly"
 ]
 
@@ -66,9 +66,10 @@ TS_NEXT_DEQUEUE_DELAY = 2
 
 
 class Intersection:
-    def __init__(self, iid, grid, mesh=STANDARD_4WAY_YIELD):
+    def __init__(self, iid, grid, pdata, mesh=STANDARD_4WAY_YIELD):
         super()
         self.iid = iid
+        self.ptestdata = pdata
         self.grid = grid
         self.n_from = 4
         self.n_to = 4
@@ -82,6 +83,7 @@ class Intersection:
         self.pos_x = 0
         self.pos_y = 0
         self.light_state = LightState(self)
+
 
     def set_position(self, x, y):
         self.pos_x = x
@@ -118,7 +120,7 @@ class Intersection:
         is_red = self.light_state.is_red_at_time(ts, d, qid)
         state = 0  # pass
         if is_red or self.outgoing_queue[qid]:
-            if ptestdata: print("Car {} stops at {}".format(cid, ts))
+            if self.ptestdata: print("{}: Car {} stops".format(ts, cid))
             self.grid.car_last_stop[cid] = ts
             # Enter the queue and schedule a light_change event
             item = [ts, cid, found_route[0], found_route[1]]
@@ -127,8 +129,9 @@ class Intersection:
         else:
             self.grid.count_waited += 1
             # No queue, just go through full speed
-            if ptestdata: print("Car {} passed intersection #{} fast, to {}".format(cid, self.iid,
-                                                DIRECTION_NAMES[found_route[1]]))
+            if self.ptestdata:
+                print("{}: Car {} passed intersection #{} fast, to {}"
+                      .format(ts, cid, self.iid,DIRECTION_NAMES[found_route[1]]))
             self.go_to_next_intersection(ts, cid, found_route)
         return (found_route[1], state)
 
@@ -233,7 +236,7 @@ class TrafficGrid:
             for j in range(n + 2):
                 iid = i + j * (m + 2)
                 if 0 < i < m + 1 and 0 < j < n + 1:
-                    io = Intersection(iid, self)
+                    io = Intersection(iid, self, iid == 16)
                     io.set_position(i * 400 - 800, j * 400 - 800)
                     io.assign_from_iid(0, iid - (m + 2))
                     io.assign_from_iid(1, iid - 1)
@@ -278,7 +281,10 @@ class TrafficGrid:
         msg = "{:-3d}: ".format(ev[0]) + fmt.format(*ev[2])
         for d in range(4):
             msg = msg.replace('direction{}'.format(d), DIRECTION_NAMES[d])
-        if ptestdata: print(msg)
+        for d in range(2):
+            msg = msg.replace('now{}'
+                .format(d), DIRECTION_NAMES[d]+ " " + DIRECTION_NAMES[(d+2)%4])
+        if ev[2][1] == 16: print(msg)
 
     # this might be a short function but it's the method that makes this whole thing run
     def event_loop(self):
@@ -306,10 +312,10 @@ class TrafficGrid:
                 self.choreographer.car_intersection_event(ts, cid, to_iid, d, od, state)
 
     # This event only for intersections with car waiting
-    # Payload is [iid, to_light_state]
+    # Payload is [to_light_state, iid]
     def efn_light_change(self, ts, payload):
-        iid = payload[0]
-        state = payload[1]
+        iid = payload[1]
+        state = payload[0]
         iso = self.intersections[iid]
         iso.light_change(ts, state)
 
