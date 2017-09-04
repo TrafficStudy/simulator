@@ -4,7 +4,7 @@ import copy
 import heapq
 import statistics
 from choreographer import Choreographer
-from light_state import LightState as LightState
+from light_state import LightState1 as LightState
 # import numpy as np
 
 # Terminology:
