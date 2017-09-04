@@ -56,7 +56,7 @@ EVENT_FORMAT_STRINGS = [
     "",
     "Car {0} stopped after passing intersection #{1}",
     "Car {0} approaches intersection #{1} from direction{2}",
-    "Light changes at intersection #{1}: now {0}",
+    "{0} at #{1}",
     "Car {0} leaves intersection #{1} slowly"
 ]
 
@@ -122,10 +122,9 @@ class Intersection:
         if is_red or self.outgoing_queue[qid]:
             if self.ptestdata: print("{}: Car {} stops".format(ts, cid))
             self.grid.car_last_stop[cid] = ts
-            # Enter the queue and schedule a light_change event
+            # Enter the queue
             item = [ts, cid, found_route[0], found_route[1]]
             self.outgoing_queue[qid].append(item)  # Queue will take care of this car
-            state = len(self.outgoing_queue[qid])
         else:
             self.grid.count_waited += 1
             # No queue, just go through full speed
@@ -133,7 +132,7 @@ class Intersection:
                 print("{}: Car {} passed intersection #{} fast, to {}"
                       .format(ts, cid, self.iid,DIRECTION_NAMES[found_route[1]]))
             self.go_to_next_intersection(ts, cid, found_route)
-        return (found_route[1], state)
+        return found_route[1], state
 
     def go_to_next_intersection(self, ts, cid, found_route):
         # Check if the car will "go home"

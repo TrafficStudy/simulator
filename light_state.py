@@ -14,7 +14,7 @@ class LightState:
         self.period = 100  # Typical red light duration
         self.half_period = 50
         self.start = random.randint(-100, 0)
-        #false = red, true = green
+        #false = N-S, true = E-W
         self.state = False
         self.itn = Intersection
 
@@ -42,28 +42,20 @@ class LightState:
         return n_periods * self.period + self.half_period + start
 
 # Dumb light cycle that only changes to let queues pass
-class LightState1(LightState):
+class LightStateDiag(LightState):
 
     def is_red_at_time(self, time, d, qid):
-        if len(self.itn.outgoing_queue[qid]) >= 10:
-            self.itn.grid.add_event(EV_LIGHT_CHANGE, time, (qid % 2, self.itn.iid))
-            self.state = qid % 2
-        return self.state & d
+        return True
 
 # Smarter cycle light that resets the cycle whenever a queue reaches over x cars
 class LightState2(LightState):
 
     def is_red_at_time(self, time, d, qid):
-        start = self.start
-        if (d & 1) != 0:
-            start += self.half_period
-        end_state = not ((time - start) % self.period < self.half_period)
+        end_state = self.state
         if len(self.itn.outgoing_queue[qid]) >= 10:
             end_state = (qid + 1) % 2
             self.start = time
         if end_state != self.state:
             self.state = end_state
             self.itn.grid.add_event(EV_LIGHT_CHANGE, time, True, (end_state, self.itn.iid))
-        self.itn.grid.add_event(EV_LIGHT_CHANGE, self.next_green(time, d), True,
-                                (end_state, self.itn.iid))
-        return self.state & d
+        return end_state & d
