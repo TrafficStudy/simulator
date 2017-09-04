@@ -45,7 +45,7 @@ class LightState1(LightState):
         if len(self.itn.outgoing_queue[qid]) >= 10:
             self.itn.grid.add_event(EV_LIGHT_CHANGE, time, (qid % 2, self.itn.iid))
             self.state = qid % 2
-        return self.state
+        return self.state & d
 
 # Smarter cycle light that resets the cycle whenever a queue reaches over x cars
 class LightState2(LightState):
@@ -60,7 +60,7 @@ class LightState2(LightState):
             self.start = time
         if end_state != self.state:
             self.state = end_state
-            self.itn.grid.add_event(EV_LIGHT_CHANGE, time, (end_state, self.itn.iid))
-        self.itn.grid.add_event(EV_LIGHT_CHANGE, self.next_green(time, d),
+            self.itn.grid.add_event(EV_LIGHT_CHANGE, time, True, (end_state, self.itn.iid))
+        self.itn.grid.add_event(EV_LIGHT_CHANGE, self.next_green(time, d), True,
                                 (end_state, self.itn.iid))
-        return self.state
+        return self.state & d

@@ -140,7 +140,7 @@ class Intersection:
         ran2 = random.random()
         if ran2 < found_route[3]:  # Car got home
             stop_time = ts + round(found_route[4] * ran2 / found_route[3])
-            self.grid.add_event(EV_CAR_STOPPED, stop_time,
+            self.grid.add_event(EV_CAR_STOPPED, stop_time, True,
                                 (cid, self.iid, found_route[1]))
             return
 
@@ -148,7 +148,7 @@ class Intersection:
         arrival = ts + found_route[4]
         to_d = self.to_dir_lookup[found_route[1]]
         to_iid = self.to_iids[found_route[1]]
-        self.grid.add_event(EV_CAR_ENTER_INTERSECTION, arrival, (cid, to_iid, to_d))
+        self.grid.add_event(EV_CAR_ENTER_INTERSECTION, arrival, True, (cid, to_iid, to_d))
 
     def light_change(self, ts, to_state):
         for route in self.mesh:
@@ -158,7 +158,7 @@ class Intersection:
             qid = route[0] + route[1] * self.n_from
             if self.outgoing_queue[qid]:
                 cid = self.outgoing_queue[qid][0][1]  # Peek only
-                self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_FIRST_DEQUEUE_DELAY,
+                self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_FIRST_DEQUEUE_DELAY, True,
                                     (cid, self.iid, qid))
 
     def dequeue_green(self, ts, cid, qid):
@@ -171,7 +171,7 @@ class Intersection:
         self.grid.count_waited += 1
         if self.outgoing_queue[qid]:
             cid = self.outgoing_queue[qid][0][1]
-            self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_NEXT_DEQUEUE_DELAY,
+            self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_NEXT_DEQUEUE_DELAY, True,
                                 (cid, self.iid, qid))
         return item
 
@@ -273,8 +273,8 @@ class TrafficGrid:
                     self.inlets.append(io)
                 self.intersections[iid] = io
 
-    def add_event(self, ev_type, ts, payload):
-        heapq.heappush(self.events, [ts, ev_type, payload])
+    def add_event(self, ev_type, ts, valid, payload):
+        heapq.heappush(self.events, [ts, ev_type, payload, valid])
 
     def print_event(self, ev):
         fmt = EVENT_FORMAT_STRINGS[ev[1]]
@@ -288,6 +288,7 @@ class TrafficGrid:
     def event_loop(self):
         while len(self.events) > 0:
             ev = heapq.heappop(self.events)
+            if not ev[3]: continue
             self.print_event(ev)
             self.last_event_ts = ev[0]
             fn = self.event_handlers[ev[1]]
@@ -379,7 +380,7 @@ class Statistics:
             last_ts += random.randint(0, 100)
             inlet = tr.intersections[random.choice(inlet_array)]
             tr.add_event(EV_CAR_ENTER_INTERSECTION,
-                         last_ts, (i, inlet.to_iid, inlet.to_dir))
+                         last_ts, True, (i, inlet.to_iid, inlet.to_dir))
         tr.event_loop()
         average_wait_time = tr.total_wait_time / tr.count_waited
         if ptestdata: print("Finished. Average wait = {}".format(average_wait_time))
