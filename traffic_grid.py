@@ -151,15 +151,18 @@ class Intersection:
         self.grid.add_event(EV_CAR_ENTER_INTERSECTION, arrival, True, (cid, to_iid, to_d))
 
     def light_change(self, ts, to_state):
+        self.light_state.state = to_state
         for route in self.mesh:
             if (route[0] & 1) != to_state:
-                continue  # Nothing to do with red ones
+                continue  # Routes blocked by red will not dequeue
 
             qid = route[0] + route[1] * self.n_from
             if self.outgoing_queue[qid]:
                 cid = self.outgoing_queue[qid][0][1]  # Peek only
                 self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_FIRST_DEQUEUE_DELAY, True,
                                     (cid, self.iid, qid))
+        self.grid.add_event(EV_LIGHT_CHANGE, ts + self.light_state.half_period,
+                            True, (not to_state, self.iid))
 
     def dequeue_green(self, ts, cid, qid):
         if len(self.outgoing_queue[qid]) == 0:
@@ -199,6 +202,7 @@ class TrafficGrid:
     def __init__(self, choreographer=None):
         super()
         self.events = []
+        self.marking = []
         self.inlets = []
         self.outlets = []
         self.intersections = []
@@ -274,7 +278,14 @@ class TrafficGrid:
                 self.intersections[iid] = io
 
     def add_event(self, ev_type, ts, valid, payload):
-        heapq.heappush(self.events, [ts, ev_type, payload, valid])
+        ev = [ts, ev_type, payload, valid]
+        if ev_type == EV_LIGHT_CHANGE:
+            for i in self.marking:
+                if i[1] == EV_LIGHT_CHANGE:
+                    if i[2][1] == ev[2][1]:
+                        i[3] = False
+            self.marking.append(copy.copy(ev))
+        heapq.heappush(self.events, ev)
 
     def print_event(self, ev):
         fmt = EVENT_FORMAT_STRINGS[ev[1]]
@@ -311,7 +322,7 @@ class TrafficGrid:
                 self.choreographer.car_intersection_event(ts, cid, to_iid, d, od, state)
 
     # This event only for intersections with car waiting
-    # Payload is [to_light_state, iid]
+    # Payload is [to_light_state, IID]
     def efn_light_change(self, ts, payload):
         iid = payload[1]
         state = payload[0]

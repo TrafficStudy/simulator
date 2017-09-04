@@ -18,6 +18,9 @@ class LightState:
         self.state = False
         self.itn = Intersection
 
+        self.itn.grid.add_event(EV_LIGHT_CHANGE, self.start + self.half_period, True,
+                                (True, self.itn.iid))
+
     def is_red_at_time(self, time, d, qid):
         start = self.start
         if (d & 1) != 0:
