@@ -56,7 +56,7 @@ EVENT_FORMAT_STRINGS = [
     "",
     "Car {0} stopped after passing intersection #{1}",
     "Car {0} approaches intersection #{1} from direction{2}",
-    "Light changes at intersection #{1}: now{0}",
+    "Light changes at intersection #{1}: now {0}",
     "Car {0} leaves intersection #{1} slowly"
 ]
 
@@ -78,7 +78,7 @@ class Intersection:
         self.to_dir_lookup = [2, 3, 0, 1]  # Leaving 0, arriving 2 etc.
         self.mesh = copy.deepcopy(mesh)
         self.intersection_state = None
-        self.outgoing_queue = [[] for i in range(self.n_from * self.n_to)]  # include uturn
+        self.outgoing_queue = [[] for i in range(self.n_from * self.n_to)]
         self.qid_to_route = self.build_qid_lookup()
         self.pos_x = 0
         self.pos_y = 0
@@ -281,9 +281,7 @@ class TrafficGrid:
         msg = "{:-3d}: ".format(ev[0]) + fmt.format(*ev[2])
         for d in range(4):
             msg = msg.replace('direction{}'.format(d), DIRECTION_NAMES[d])
-        for d in range(2):
-            msg = msg.replace('now{}'
-                .format(d), DIRECTION_NAMES[d]+ " " + DIRECTION_NAMES[(d+2)%4])
+        # msg = msg.replace('orient{0}', )
         if ev[2][1] == 16: print(msg)
 
     # this might be a short function but it's the method that makes this whole thing run
@@ -380,10 +378,8 @@ class Statistics:
         for i in range(100):
             last_ts += random.randint(0, 100)
             inlet = tr.intersections[random.choice(inlet_array)]
-            tr.add_event(EV_CAR_ENTER_INTERSECTION, last_ts, (i, inlet.to_iid, inlet.to_dir))
-        # tr.add_event(EV_CAR_ENTER_INTERSECTION, 0, (1, 7, 0))
-        # tr.add_event(EV_CAR_ENTER_INTERSECTION, 1, (2, 11, 1))
-        # tr.add_event(EV_CAR_ENTER_INTERSECTION, 3, (3, 17, 2))
+            tr.add_event(EV_CAR_ENTER_INTERSECTION,
+                         last_ts, (i, inlet.to_iid, inlet.to_dir))
         tr.event_loop()
         average_wait_time = tr.total_wait_time / tr.count_waited
         if ptestdata: print("Finished. Average wait = {}".format(average_wait_time))
