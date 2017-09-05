@@ -17,13 +17,13 @@ from light_state import LightState1 as LightState
 #             (0)
 #              |
 #             ---
-# ----(1) ---|   |----(3)----
+# ----(3) ---|   |----(1)----
 #             ---
 #              |
 #             (2)
 #              |
 ptestdata = 1  # determines whether to show specific events in each sample run
-DIRECTION_NAMES = ['North', 'West', 'South', 'East']
+DIRECTION_NAMES = ['North', 'East', 'South', 'West']
 
 # Behavior names
 DEFAULT_RIGHT = 1  # Means: Green: go, Red/Yellow: Stop and then yield_go(1)
