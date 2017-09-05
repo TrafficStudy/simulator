@@ -202,8 +202,9 @@ class Inlet:
 
 
 class TrafficGrid:
-    def __init__(self, choreographer=None):
+    def __init__(self, num_cars, choreographer=None):
         super()
+        self.num_cars = num_cars
         self.events = []
         self.marking = []
         self.inlets = []
@@ -304,7 +305,7 @@ class TrafficGrid:
     # this might be a short function but it's the method that makes this whole thing run
     def event_loop(self):
         cars_finish = 0
-        while cars_finish < 100:
+        while cars_finish < self.num_cars:
             ev = heapq.heappop(self.events)
             if not ev[3]:
                 continue
@@ -352,9 +353,10 @@ class TrafficGrid:
 
 
 class Statistics:
+    list_number = 1 # number of times the program is going to run
+    num_cars = 1000
     random.seed(5) # deterministic randomness
     counter = 0
-    list_number = 1 # number of times the program is going to run
     total_wait_time = 0
     wait_time_list = []
 
@@ -380,7 +382,7 @@ class Statistics:
             print("The standard deviation is: N/A")
     
     def master_run(self):
-        tr = TrafficGrid()
+        tr = TrafficGrid(self.num_cars)
         tr.choreographer = Choreographer(tr)
         tr.generate_grid(3, 3)
         # In this 3x3 grid example:
@@ -396,7 +398,7 @@ class Statistics:
     
         last_ts = 0
         inlet_array = [1, 2, 3, 5, 9, 10, 14, 15, 19, 21, 22, 23]
-        for i in range(100):
+        for i in range(self.num_cars):
             last_ts += random.randint(0, 100)
             inlet = tr.intersections[random.choice(inlet_array)]
             tr.add_event(EV_CAR_ENTER_INTERSECTION,
