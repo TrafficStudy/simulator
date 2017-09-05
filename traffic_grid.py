@@ -30,7 +30,7 @@ DEFAULT_RIGHT = 1  # Means: Green: go, Red/Yellow: Stop and then yield_go(1)
 DEFAULT = 2  # Green: go, Red/Yellow: Wait
 YIELD_LEFT = 4  # Green: yield_go(2), Red/Yellow: Wait
 
-# From#, To#, Probability to take, probablility to stop, time_to_travel,
+# From#, To#, Probability to take, probability to stop, time_to_travel,
 # behavior (based on green/red)
 STANDARD_4WAY_YIELD = [
     [0, 1, 0.15, 0, 100, DEFAULT_RIGHT],
@@ -164,6 +164,7 @@ class Intersection:
                                     (cid, self.iid, qid))
         self.grid.add_event(EV_LIGHT_CHANGE, ts + to_phase[8],
                             True, ((to_state + 1) % len(self.light_state.phases), self.iid))
+        self.light_state.state = to_state
 
     def dequeue_green(self, ts, cid, qid):
         if len(self.outgoing_queue[qid]) == 0:

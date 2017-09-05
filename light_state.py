@@ -16,8 +16,8 @@ class LightState:
             # Assuming that any light configuration will be rotationally symmetrical,
             # Can be altered to be asymmetrical
             #
-            [1, 1, 1, 1, 0, 0, 0, 0, 50],
-            [0, 0, 0, 0, 1, 1, 1, 1, 50]
+            [1, 0, 1, 0, 1, 0, 1, 0, 50],
+            [0, 1, 0, 1, 0, 1, 0, 1, 50]
         ]
         self.period = 100  # Typical red light duration
         self.half_period = 50
@@ -61,8 +61,8 @@ class LightState1(LightState):
         if end_state != self.state:
             self.state = end_state
             self.itn.grid.add_event(EV_LIGHT_CHANGE, time, True, (end_state, self.itn.iid))
-        if self.itn.iid == 16: print(qid)
         is_red = self.phases[self.state][qid % 8]
+        # if self.itn.iid == 16: print(qid)
         return is_red
 
 # Dumb light cycle that only changes to let queues pass
