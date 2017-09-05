@@ -6,6 +6,7 @@ EV_LIGHT_CHANGE = 3
 EV_DEQUEUE_GREEN = 4  # This is the slow de-queuing of a light just turned green
 
 # This is the "basic light", which has a pair of connected red/green lights
+# now outdated
 class LightState:
 
     def __init__(self, Intersection):
@@ -14,8 +15,9 @@ class LightState:
         self.phases = [
             # Assuming that any light configuration will be rotationally symmetrical,
             # Can be altered to be asymmetrical
-            [50, 1, 1, 1, 1, 0, 0, 0, 0],
-            [50, 0, 0, 0, 0, 1, 1, 1, 1]
+            #
+            [1, 1, 1, 1, 0, 0, 0, 0, 50],
+            [0, 0, 0, 0, 1, 1, 1, 1, 50]
         ]
         self.period = 100  # Typical red light duration
         self.half_period = 50
@@ -23,8 +25,8 @@ class LightState:
         #1 = N-S, 0 = E-W
         self.state = 0
         self.itn = Intersection
-        self.itn.grid.add_event(EV_LIGHT_CHANGE, self.start + self.half_period, True,
-                                (1, self.itn.iid))
+        self.itn.grid.add_event(EV_LIGHT_CHANGE, self.start + self.phases[self.state][8],
+                                True, (1, self.itn.iid))
 
     def is_red_at_time(self, time, d, qid):
         start = self.start
@@ -59,6 +61,7 @@ class LightState1(LightState):
         if end_state != self.state:
             self.state = end_state
             self.itn.grid.add_event(EV_LIGHT_CHANGE, time, True, (end_state, self.itn.iid))
+        if self.itn.iid == 16: print(qid)
         is_red = self.phases[self.state][qid % 8]
         return is_red
 

@@ -11,6 +11,7 @@ from light_state import LightState1 as LightState
 #   IID: Intersection ID, uniquely identify an intersection (if > 0)
 #        or an external source
 #   CID: Car ID, uniquely identify a car
+#   QID: Queue ID, identifies a queue at an intersection
 
 #              |
 #             (0)
@@ -57,7 +58,7 @@ EVENT_FORMAT_STRINGS = [
     "Car {0} stopped after passing intersection #{1}",
     "Car {0} approaches intersection #{1} from direction{2}",
     "{0} at #{1}",
-    "Car {0} leaves intersection #{1} slowly"
+    "Car {0} leaves intersection #{1} slowly, going direction{2}"
 ]
 
 # Some time constants (in seconds)
@@ -118,6 +119,7 @@ class Intersection:
             break
         qid = found_route[0] + found_route[1] * self.n_from
         is_red = self.light_state.is_red_at_time(ts, d, qid)
+        # if self.iid == 16: print(is_red)
         state = 0  # pass
         if is_red or self.outgoing_queue[qid]:
             if self.ptestdata: print("{}: Car {} stops".format(ts, cid))
@@ -129,7 +131,7 @@ class Intersection:
             self.grid.count_waited += 1
             # No queue, just go through full speed
             if self.ptestdata:
-                print("{}: Car {} passed intersection #{} fast, to {}"
+                print("{}: Car {} passes intersection #{} fast, to {}"
                       .format(ts, cid, self.iid,DIRECTION_NAMES[found_route[1]]))
             self.go_to_next_intersection(ts, cid, found_route)
         return found_route[1], state
@@ -160,7 +162,7 @@ class Intersection:
                 cid = self.outgoing_queue[qid][0][1]  # Peek only
                 self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_FIRST_DEQUEUE_DELAY, True,
                                     (cid, self.iid, qid))
-        self.grid.add_event(EV_LIGHT_CHANGE, ts + to_phase[0],
+        self.grid.add_event(EV_LIGHT_CHANGE, ts + to_phase[8],
                             True, ((to_state + 1) % len(self.light_state.phases), self.iid))
 
     def dequeue_green(self, ts, cid, qid):
@@ -278,6 +280,7 @@ class TrafficGrid:
 
     def add_event(self, ev_type, ts, valid, payload):
         ev = [ts, ev_type, payload, valid]
+        # Special procedure for erasing outdated light_change events (and adding new ones)
         if ev_type == EV_LIGHT_CHANGE:
             for i in self.marking:
                 if i[1] == EV_LIGHT_CHANGE:
@@ -288,10 +291,12 @@ class TrafficGrid:
 
     def print_event(self, ev):
         fmt = EVENT_FORMAT_STRINGS[ev[1]]
+        # Time and event_string
         msg = "{:-3d}: ".format(ev[0]) + fmt.format(*ev[2])
-        for d in range(4):
-            msg = msg.replace('direction{}'.format(d), DIRECTION_NAMES[d])
+        for d in range(10):
+            msg = msg.replace('direction{}'.format(d), DIRECTION_NAMES[d % 4])
         if ev[2][1] == 16:
+        # if ev[2][0] == 3:
             print(msg)
 
     # this might be a short function but it's the method that makes this whole thing run
