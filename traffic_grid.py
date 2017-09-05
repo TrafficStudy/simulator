@@ -154,11 +154,12 @@ class Intersection:
     def light_change(self, ts, to_state):
         to_phase = self.light_state.phases[to_state]
         for route in self.mesh:
-            if to_phase[route[0]] == 0:
+            if to_phase[route[0]] == 1:
                 continue  # Routes blocked by red will not dequeue
 
             qid = route[0] + route[1] * self.n_from
             if self.outgoing_queue[qid]:
+                # if self.iid == 16: print(qid)
                 cid = self.outgoing_queue[qid][0][1]  # Peek only
                 self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_FIRST_DEQUEUE_DELAY, True,
                                     (cid, self.iid, qid))
@@ -294,7 +295,7 @@ class TrafficGrid:
         fmt = EVENT_FORMAT_STRINGS[ev[1]]
         # Time and event_string
         msg = "{:-3d}: ".format(ev[0]) + fmt.format(*ev[2])
-        for d in range(10):
+        for d in range(16):
             msg = msg.replace('direction{}'.format(d), DIRECTION_NAMES[d % 4])
         if ev[2][1] == 16:
         # if ev[2][0] == 3:
