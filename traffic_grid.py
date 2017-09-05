@@ -4,7 +4,7 @@ import copy
 import heapq
 import statistics
 from choreographer import Choreographer
-from light_state import LightState2 as LightState
+from light_state import LightState1 as LightState
 # import numpy as np
 
 # Terminology:
@@ -150,9 +150,9 @@ class Intersection:
         self.grid.add_event(EV_CAR_ENTER_INTERSECTION, arrival, True, (cid, to_iid, to_d))
 
     def light_change(self, ts, to_state):
-        self.light_state.state = to_state
+        to_phase = self.light_state.phases[to_state]
         for route in self.mesh:
-            if (route[0] & 1) != to_state:
+            if to_phase[route[0]] == 0:
                 continue  # Routes blocked by red will not dequeue
 
             qid = route[0] + route[1] * self.n_from
@@ -160,8 +160,8 @@ class Intersection:
                 cid = self.outgoing_queue[qid][0][1]  # Peek only
                 self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_FIRST_DEQUEUE_DELAY, True,
                                     (cid, self.iid, qid))
-        self.grid.add_event(EV_LIGHT_CHANGE, ts + self.light_state.half_period,
-                            True, (not to_state, self.iid))
+        self.grid.add_event(EV_LIGHT_CHANGE, ts + to_phase[0],
+                            True, ((to_state + 1) % len(self.light_state.phases), self.iid))
 
     def dequeue_green(self, ts, cid, qid):
         if len(self.outgoing_queue[qid]) == 0:
