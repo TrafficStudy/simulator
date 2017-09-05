@@ -291,19 +291,21 @@ class TrafficGrid:
         msg = "{:-3d}: ".format(ev[0]) + fmt.format(*ev[2])
         for d in range(4):
             msg = msg.replace('direction{}'.format(d), DIRECTION_NAMES[d])
-        # msg = msg.replace('orient{0}', )
-        if ev[2][1] == 16: print(msg)
+        if ev[2][1] == 16:
+            print(msg)
 
     # this might be a short function but it's the method that makes this whole thing run
     def event_loop(self):
-        while len(self.events) > 0:
+        cars_finish = 0
+        while cars_finish < 100:
             ev = heapq.heappop(self.events)
-            if not ev[3]: continue
+            if not ev[3]:
+                continue
             self.print_event(ev)
             self.last_event_ts = ev[0]
             fn = self.event_handlers[ev[1]]
             if fn is not None:
-                fn(ev[0], ev[2])
+                if fn(ev[0], ev[2]): cars_finish += 1
 
     # Payload is [cid, toIID, direction]
     def efn_enter_intersection(self, ts, payload):
@@ -314,6 +316,7 @@ class TrafficGrid:
         if type(iso) is Inlet:
             if self.choreographer:
                 self.choreographer.car_intersection_event(ts, cid, to_iid, d, -1)
+            return 1
             # Car exits from the grid
         else:
             od, state = iso.incoming_traffic(ts, d, cid)
