@@ -291,8 +291,9 @@ class TrafficGrid:
         if ev_type == EV_LIGHT_CHANGE:
             for i in self.marking:
                 if i[1] == EV_LIGHT_CHANGE:
-                    if i[2][1] == ev[2][1]:
+                    if i[2][1] == ev[2][1]:  # check intersection numbers
                         i[3] = False
+                        self.marking.remove(i)
             self.marking.append(copy.copy(ev))
         heapq.heappush(self.events, ev)
 
@@ -310,8 +311,9 @@ class TrafficGrid:
         cars_finish = 0
         while cars_finish < self.num_cars:
             ev = heapq.heappop(self.events)
-            if ev[1] == EV_ALL_STOP: break;
+            if ev[1] == EV_ALL_STOP: break
             if not ev[3]:
+                print(".")
                 continue
             if self.pdata:
                 self.print_event(ev)
@@ -360,7 +362,7 @@ class TrafficGrid:
 class Statistics:
     pdata = 1  # determines whether to show specific events in each sample run
     list_number = 1 # number of times the program is going to run
-    num_cars = 100
+    num_cars = 1000
     random.seed(5) # deterministic randomness
     counter = 0
     total_wait_time = 0

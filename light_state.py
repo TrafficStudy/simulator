@@ -59,21 +59,19 @@ class LightState1(LightState):
         # sum is the number of cars in that direction
         sum = 1
         s_block = (int)(qid/4)*4
-        for i in range(s_block, (s_block+4)%16):
-            sum += len(self.itn.outgoing_queue[i])
-        for i in range((s_block+8)%16, ((s_block+12)%16)):
-            sum += len(self.itn.outgoing_queue[i])
+        for i in range(s_block, s_block+4):
+            sum += len(self.itn.outgoing_queue[i % 16])
+        for i in range(s_block+8, s_block+12):
+            sum += len(self.itn.outgoing_queue[i % 16])
         if sum >= 2:
             # self.itn.grid.add_event(EV_ALL_STOP, time, True, None)
-            # to change: instead of setting the end_state directly,
-            # iterate through the cycle until a satisfactory phase is found
-            end_state = (qid + 1) % 2
-        # elif test:
-            # print(sum)
+            for i in range(len(self.phases)):
+                if self.phases[i][qid % 8] == 0:
+                    end_state = i
+                    break
         if end_state != self.state:
-            self.state = end_state
             self.itn.grid.add_event(EV_LIGHT_CHANGE, time, True, (end_state, self.itn.iid))
-        is_red = self.phases[self.state][qid % 8]
+        is_red = self.phases[end_state][qid % 8]
         return is_red
 
 # Dumb light cycle that only changes to let queues pass
