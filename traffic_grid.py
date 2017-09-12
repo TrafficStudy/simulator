@@ -159,12 +159,10 @@ class Intersection:
     def light_change(self, ts, to_state):
         to_phase = self.light_state.phases[to_state]
         for route in self.mesh:
-            if to_phase[route[0]] == 1:
-                continue  # Routes blocked by red will not dequeue
-
             qid = route[0] * self.n_to + route[1]
+            if to_phase[qid % 8] == 1:
+                continue  # Routes blocked by red will not dequeue
             if self.outgoing_queue[qid]:
-                # if self.iid == 16: print(qid)
                 cid = self.outgoing_queue[qid][0][1]  # Peek only
                 self.grid.add_event(EV_DEQUEUE_GREEN, ts + TS_FIRST_DEQUEUE_DELAY, True,
                                     (cid, self.iid, qid))
@@ -362,7 +360,7 @@ class TrafficGrid:
 class Statistics:
     pdata = 1  # determines whether to show specific events in each sample run
     list_number = 1 # number of times the program is going to run
-    num_cars = 1000
+    num_cars = 100
     random.seed(5) # deterministic randomness
     counter = 0
     total_wait_time = 0
