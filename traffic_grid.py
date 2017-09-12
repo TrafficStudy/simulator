@@ -4,7 +4,7 @@ import copy
 import heapq
 import statistics
 from choreographer import Choreographer
-from light_state import LightState1 as LightState
+from light_state import LightState as LightState
 # import numpy as np
 
 # Terminology:
@@ -33,22 +33,22 @@ YIELD_LEFT = 4  # Green: yield_go(2), Red/Yellow: Wait
 # From#, To#, Probability to take, probability to stop, time_to_travel,
 # behavior (based on green/red)
 STANDARD_4WAY_YIELD = [
-    [0, 0, 0.05, 0, 100, U_TURN],
-    [0, 1, 0.15, 0, 100, DEFAULT_RIGHT],
-    [0, 2, 0.65, 0, 100, DEFAULT],
-    [0, 3, 0.15, 0, 100, YIELD_LEFT],
-    [1, 1, 0.05, 0, 100, U_TURN],
-    [1, 0, 0.15, 0, 100, YIELD_LEFT],
-    [1, 3, 0.65, 0, 100, DEFAULT],
-    [1, 2, 0.15, 0, 100, DEFAULT_RIGHT],
-    [2, 2, 0.05, 0, 100, U_TURN],
-    [2, 1, 0.15, 0, 100, YIELD_LEFT],
-    [2, 0, 0.65, 0, 100, DEFAULT],
-    [2, 3, 0.15, 0, 100, DEFAULT_RIGHT],
-    [3, 3, 0.05, 0, 100, U_TURN],
-    [3, 0, 0.15, 0, 100, DEFAULT_RIGHT],
-    [3, 1, 0.65, 0, 100, DEFAULT],
-    [3, 2, 0.15, 0, 100, YIELD_LEFT],
+    [0, 0, 0.05, 0, 10, U_TURN],
+    [0, 1, 0.15, 0, 10, DEFAULT_RIGHT],
+    [0, 2, 0.65, 0, 10, DEFAULT],
+    [0, 3, 0.15, 0, 10, YIELD_LEFT],
+    [1, 1, 0.05, 0, 10, U_TURN],
+    [1, 0, 0.15, 0, 10, YIELD_LEFT],
+    [1, 3, 0.65, 0, 10, DEFAULT],
+    [1, 2, 0.15, 0, 10, DEFAULT_RIGHT],
+    [2, 2, 0.05, 0, 10, U_TURN],
+    [2, 1, 0.15, 0, 10, YIELD_LEFT],
+    [2, 0, 0.65, 0, 10, DEFAULT],
+    [2, 3, 0.15, 0, 10, DEFAULT_RIGHT],
+    [3, 3, 0.05, 0, 10, U_TURN],
+    [3, 0, 0.15, 0, 10, DEFAULT_RIGHT],
+    [3, 1, 0.65, 0, 10, DEFAULT],
+    [3, 2, 0.15, 0, 10, YIELD_LEFT],
 ]
 
 # Events
@@ -127,7 +127,8 @@ class Intersection:
         # if self.iid == 16: print(is_red)
         state = 0  # pass
         if is_red or self.outgoing_queue[qid]:
-            if self.pdata: print("{}: Car {} stops".format(ts, cid))
+            if self.pdata:
+                print("{}: Car {} stops".format(ts, cid))
             self.grid.car_last_stop[cid] = ts
             # Enter the queue
             item = [ts, cid, found_route[0], found_route[1]]
@@ -248,7 +249,7 @@ class TrafficGrid:
             for j in range(n + 2):
                 iid = i + j * (m + 2)
                 if 0 < i < m + 1 and 0 < j < n + 1:
-                    io = Intersection(iid, self, iid == 16)
+                    io = Intersection(iid, self, self.pdata & (iid == 16))
                     io.set_position(i * 400 - 800, j * 400 - 800)
                     io.assign_from_iid(0, iid - (m + 2))
                     io.assign_from_iid(1, iid - 1)
@@ -360,8 +361,8 @@ class TrafficGrid:
 
 class Statistics:
     pdata = 1  # determines whether to show specific events in each sample run
-    list_number = 1 # number of times the program is going to run
-    num_cars = 1000
+    list_number = 100 # number of times the program is going to run
+    num_cars = 100
     random.seed(5) # deterministic randomness
     counter = 0
     total_wait_time = 0

@@ -30,24 +30,7 @@ class LightState:
                                 True, (1, self.itn.iid))
 
     def is_red_at_time(self, time, d, qid):
-        start = self.start
-        if (d & 1) != 0:
-            start += self.half_period
-        end_state = not ((time - start) % self.period < self.half_period)
-        if end_state != self.state:
-            self.state = end_state
-            self.itn.grid.add_event(EV_LIGHT_CHANGE, time, (end_state, self.itn.iid))
-        self.itn.grid.add_event(EV_LIGHT_CHANGE, self.next_green(time, d),
-                                (end_state, self.itn.iid))
-        return self.state
-
-    def next_green(self, time, d):
-        start = self.start
-        if (d & 1) != 0:
-            start += self.half_period
-
-        n_periods = int((time - start) / self.period)
-        return n_periods * self.period + self.half_period + start
+        return self.phases[self.state][qid % 8]
 
 # Smarter cycle light that resets the cycle whenever a queue reaches over x cars
 class LightState1(LightState):
