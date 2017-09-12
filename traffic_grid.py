@@ -4,7 +4,7 @@ import copy
 import heapq
 import statistics
 from choreographer import Choreographer
-from light_state import LightState as LightState
+from light_state import LightState1 as LightState
 # import numpy as np
 
 # Terminology:
@@ -360,10 +360,10 @@ class TrafficGrid:
 
 
 class Statistics:
-    pdata = 1  # determines whether to show specific events in each sample run
+    pdata = 0  # determines whether to show specific events in each sample run
     list_number = 100 # number of times the program is going to run
     num_cars = 100
-    random.seed(5) # deterministic randomness
+    # random.seed(5) # deterministic randomness
     counter = 0
     total_wait_time = 0
     wait_time_list = []
