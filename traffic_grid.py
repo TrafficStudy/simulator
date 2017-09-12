@@ -294,7 +294,7 @@ class TrafficGrid:
                     if i[2][1] == ev[2][1]:  # check intersection numbers
                         i[3] = False
                         self.marking.remove(i)
-            self.marking.append(copy.copy(ev))
+            self.marking.append(ev)
         heapq.heappush(self.events, ev)
 
     def print_event(self, ev):
@@ -313,7 +313,6 @@ class TrafficGrid:
             ev = heapq.heappop(self.events)
             if ev[1] == EV_ALL_STOP: break
             if not ev[3]:
-                print(".")
                 continue
             if self.pdata:
                 self.print_event(ev)
