@@ -17,8 +17,8 @@ class LightState:
             # Assuming that any light configuration will be rotationally symmetrical,
             # Can be altered to be asymmetrical
             #
-            [1, 0, 1, 0, 1, 0, 1, 0, 50],
-            [0, 1, 0, 1, 0, 1, 0, 1, 50]
+            [1, 1, 1, 1, 0, 0, 0, 0, 50],
+            [0, 0, 0, 0, 1, 1, 1, 1, 50]
         ]
         self.period = 100  # Typical red light duration
         self.half_period = 50

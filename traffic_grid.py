@@ -63,7 +63,7 @@ EVENT_FORMAT_STRINGS = [
     "Car {0} stopped after passing intersection #{1}",
     "Car {0} approaches intersection #{1} from direction{2}",
     "{0} at #{1}",
-    "Car {0} leaves intersection #{1} slowly, going direction{2}"
+    "Car {0} leaves intersection #{1} slowly going direction{2}"
 ]
 
 # Some time constants (in seconds)
@@ -98,7 +98,7 @@ class Intersection:
     def build_qid_lookup(self):
         h = {}
         for r in self.mesh:
-            qid = r[0] + r[1] * self.n_from
+            qid = r[0] * self.n_to + r[1]
             h[qid] = r
 
         return h
@@ -122,7 +122,7 @@ class Intersection:
                 continue
             found_route = route
             break
-        qid = found_route[0] + found_route[1] * self.n_from
+        qid = found_route[0] * self.n_to + found_route[1]
         is_red = self.light_state.is_red_at_time(ts, d, qid)
         # if self.iid == 16: print(is_red)
         state = 0  # pass
@@ -162,7 +162,7 @@ class Intersection:
             if to_phase[route[0]] == 1:
                 continue  # Routes blocked by red will not dequeue
 
-            qid = route[0] + route[1] * self.n_from
+            qid = route[0] * self.n_to + route[1]
             if self.outgoing_queue[qid]:
                 # if self.iid == 16: print(qid)
                 cid = self.outgoing_queue[qid][0][1]  # Peek only
@@ -302,7 +302,7 @@ class TrafficGrid:
         fmt = EVENT_FORMAT_STRINGS[ev[1]]
         # Time and event_string
         msg = "{:-3d}: ".format(ev[0]) + fmt.format(*ev[2])
-        for d in range(16):
+        for d in range(16, -1, -1):
             msg = msg.replace('direction{}'.format(d), DIRECTION_NAMES[d % 4])
         if ev[2][1] == 16:
             print(msg)
