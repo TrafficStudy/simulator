@@ -22,10 +22,10 @@ from light_state import LightState1 as LightState
 #              |
 #             (2)
 #              |
-ptestdata = 1  # determines whether to show specific events in each sample run
 DIRECTION_NAMES = ['North', 'East', 'South', 'West']
 
 # Behavior names
+U_TURN = 0
 DEFAULT_RIGHT = 1  # Means: Green: go, Red/Yellow: Stop and then yield_go(1)
 DEFAULT = 2  # Green: go, Red/Yellow: Wait
 YIELD_LEFT = 4  # Green: yield_go(2), Red/Yellow: Wait
@@ -33,21 +33,26 @@ YIELD_LEFT = 4  # Green: yield_go(2), Red/Yellow: Wait
 # From#, To#, Probability to take, probability to stop, time_to_travel,
 # behavior (based on green/red)
 STANDARD_4WAY_YIELD = [
+    [0, 0, 0.05, 0, 100, U_TURN],
     [0, 1, 0.15, 0, 100, DEFAULT_RIGHT],
-    [0, 2, 0.70, 0, 100, DEFAULT],
+    [0, 2, 0.65, 0, 100, DEFAULT],
     [0, 3, 0.15, 0, 100, YIELD_LEFT],
+    [1, 1, 0.05, 0, 100, U_TURN],
     [1, 0, 0.15, 0, 100, YIELD_LEFT],
-    [1, 3, 0.70, 0, 100, DEFAULT],
+    [1, 3, 0.65, 0, 100, DEFAULT],
     [1, 2, 0.15, 0, 100, DEFAULT_RIGHT],
+    [2, 2, 0.05, 0, 100, U_TURN],
     [2, 1, 0.15, 0, 100, YIELD_LEFT],
-    [2, 0, 0.70, 0, 100, DEFAULT],
+    [2, 0, 0.65, 0, 100, DEFAULT],
     [2, 3, 0.15, 0, 100, DEFAULT_RIGHT],
+    [3, 3, 0.05, 0, 100, U_TURN],
     [3, 0, 0.15, 0, 100, DEFAULT_RIGHT],
-    [3, 1, 0.70, 0, 100, DEFAULT],
+    [3, 1, 0.65, 0, 100, DEFAULT],
     [3, 2, 0.15, 0, 100, YIELD_LEFT],
 ]
 
 # Events
+EV_ALL_STOP = -1
 EV_CAR_STOPPED = 1
 EV_CAR_ENTER_INTERSECTION = 2
 EV_LIGHT_CHANGE = 3
@@ -70,7 +75,7 @@ class Intersection:
     def __init__(self, iid, grid, pdata, mesh=STANDARD_4WAY_YIELD):
         super()
         self.iid = iid
-        self.ptestdata = pdata
+        self.pdata = pdata
         self.grid = grid
         self.n_from = 4
         self.n_to = 4
@@ -122,7 +127,7 @@ class Intersection:
         # if self.iid == 16: print(is_red)
         state = 0  # pass
         if is_red or self.outgoing_queue[qid]:
-            if self.ptestdata: print("{}: Car {} stops".format(ts, cid))
+            if self.pdata: print("{}: Car {} stops".format(ts, cid))
             self.grid.car_last_stop[cid] = ts
             # Enter the queue
             item = [ts, cid, found_route[0], found_route[1]]
@@ -130,7 +135,7 @@ class Intersection:
         else:
             self.grid.count_waited += 1
             # No queue, just go through full speed
-            if self.ptestdata:
+            if self.pdata:
                 print("{}: Car {} passes intersection #{} fast, to {}"
                       .format(ts, cid, self.iid,DIRECTION_NAMES[found_route[1]]))
             self.go_to_next_intersection(ts, cid, found_route)
@@ -202,8 +207,9 @@ class Inlet:
 
 
 class TrafficGrid:
-    def __init__(self, num_cars, choreographer=None):
+    def __init__(self, num_cars, pdata, choreographer=None):
         super()
+        self.pdata = pdata
         self.num_cars = num_cars
         self.events = []
         self.marking = []
@@ -299,7 +305,6 @@ class TrafficGrid:
         for d in range(16):
             msg = msg.replace('direction{}'.format(d), DIRECTION_NAMES[d % 4])
         if ev[2][1] == 16:
-        # if ev[2][0] == 3:
             print(msg)
 
     # this might be a short function but it's the method that makes this whole thing run
@@ -307,9 +312,11 @@ class TrafficGrid:
         cars_finish = 0
         while cars_finish < self.num_cars:
             ev = heapq.heappop(self.events)
+            if ev[1] == EV_ALL_STOP: break;
             if not ev[3]:
                 continue
-            self.print_event(ev)
+            if self.pdata:
+                self.print_event(ev)
             self.last_event_ts = ev[0]
             fn = self.event_handlers[ev[1]]
             if fn is not None:
@@ -353,6 +360,7 @@ class TrafficGrid:
 
 
 class Statistics:
+    pdata = 1  # determines whether to show specific events in each sample run
     list_number = 1 # number of times the program is going to run
     num_cars = 1000
     random.seed(5) # deterministic randomness
@@ -364,7 +372,7 @@ class Statistics:
         while self.counter < self.list_number:  # 2 -> program runs 2 consecutive times
             self.master_run()
         print("Total wait time in %d runs:" % self.list_number, self.total_wait_time)
-        if ptestdata: print(self.wait_time_list)
+        if self.pdata: print(self.wait_time_list)
     
         self.wait_time_list.sort()
     
@@ -382,7 +390,7 @@ class Statistics:
             print("The standard deviation is: N/A")
     
     def master_run(self):
-        tr = TrafficGrid(self.num_cars)
+        tr = TrafficGrid(self.num_cars, self.pdata)
         tr.choreographer = Choreographer(tr)
         tr.generate_grid(3, 3)
         # In this 3x3 grid example:
@@ -405,7 +413,7 @@ class Statistics:
                          last_ts, True, (i, inlet.to_iid, inlet.to_dir))
         tr.event_loop()
         average_wait_time = tr.total_wait_time / tr.count_waited
-        if ptestdata: print("Finished. Average wait = {}".format(average_wait_time))
+        if self.pdata: print("Finished. Average wait = {}".format(average_wait_time))
         self.total_wait_time += average_wait_time
         self.wait_time_list.append(average_wait_time)
         self.counter += 1
