@@ -361,7 +361,7 @@ class TrafficGrid:
 
 class Statistics:
     pdata = 0  # determines whether to show specific events in each sample run
-    list_number = 100 # number of times the program is going to run
+    list_number = 100  # number of times the program is going to run
     num_cars = 100
     # random.seed(5) # deterministic randomness
     counter = 0
@@ -407,7 +407,7 @@ class Statistics:
         last_ts = 0
         inlet_array = [1, 2, 3, 5, 9, 10, 14, 15, 19, 21, 22, 23]
         for i in range(self.num_cars):
-            last_ts += random.randint(0, 100)
+            last_ts += random.randint(0, 10)
             inlet = tr.intersections[random.choice(inlet_array)]
             tr.add_event(EV_CAR_ENTER_INTERSECTION,
                          last_ts, True, (i, inlet.to_iid, inlet.to_dir))
