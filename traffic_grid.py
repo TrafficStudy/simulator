@@ -4,7 +4,7 @@ import copy
 import heapq
 import statistics
 from choreographer import Choreographer
-from light_state import LightState1 as LightState
+from light_state import LightState2 as LightState
 # import numpy as np
 
 # Terminology:
@@ -33,22 +33,22 @@ YIELD_LEFT = 4  # Green: yield_go(2), Red/Yellow: Wait
 # From#, To#, Probability to take, probability to stop, time_to_travel,
 # behavior (based on green/red)
 STANDARD_4WAY_YIELD = [
-    [0, 0, 0.05, 0, 10, U_TURN],
-    [0, 1, 0.15, 0, 10, DEFAULT_RIGHT],
-    [0, 2, 0.65, 0, 10, DEFAULT],
-    [0, 3, 0.15, 0, 10, YIELD_LEFT],
-    [1, 1, 0.05, 0, 10, U_TURN],
-    [1, 0, 0.15, 0, 10, YIELD_LEFT],
-    [1, 3, 0.65, 0, 10, DEFAULT],
-    [1, 2, 0.15, 0, 10, DEFAULT_RIGHT],
-    [2, 2, 0.05, 0, 10, U_TURN],
-    [2, 1, 0.15, 0, 10, YIELD_LEFT],
-    [2, 0, 0.65, 0, 10, DEFAULT],
-    [2, 3, 0.15, 0, 10, DEFAULT_RIGHT],
-    [3, 3, 0.05, 0, 10, U_TURN],
-    [3, 0, 0.15, 0, 10, DEFAULT_RIGHT],
-    [3, 1, 0.65, 0, 10, DEFAULT],
-    [3, 2, 0.15, 0, 10, YIELD_LEFT],
+    [0, 0, 0.05, 0, 50, U_TURN],
+    [0, 1, 0.15, 0, 50, DEFAULT_RIGHT],
+    [0, 2, 0.65, 0, 50, DEFAULT],
+    [0, 3, 0.15, 0, 50, YIELD_LEFT],
+    [1, 1, 0.05, 0, 50, U_TURN],
+    [1, 0, 0.15, 0, 50, YIELD_LEFT],
+    [1, 3, 0.65, 0, 50, DEFAULT],
+    [1, 2, 0.15, 0, 50, DEFAULT_RIGHT],
+    [2, 2, 0.05, 0, 50, U_TURN],
+    [2, 1, 0.15, 0, 50, YIELD_LEFT],
+    [2, 0, 0.65, 0, 50, DEFAULT],
+    [2, 3, 0.15, 0, 50, DEFAULT_RIGHT],
+    [3, 3, 0.05, 0, 50, U_TURN],
+    [3, 0, 0.15, 0, 50, DEFAULT_RIGHT],
+    [3, 1, 0.65, 0, 50, DEFAULT],
+    [3, 2, 0.15, 0, 50, YIELD_LEFT],
 ]
 
 # Events
