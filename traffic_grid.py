@@ -361,7 +361,7 @@ class TrafficGrid:
 
 class Statistics:
     pdata = 0  # determines whether to show specific events in each sample run
-    list_number = 100 # number of times the program is going to run
+    list_number = 500 # number of times the program is going to run
     num_cars = 100
     # random.seed(5) # deterministic randomness
     counter = 0
@@ -369,25 +369,32 @@ class Statistics:
     wait_time_list = []
 
     def test(self):
+        self.pdata = True
         while self.counter < self.list_number:  # 2 -> program runs 2 consecutive times
             self.master_run()
+        if self.pdata:
+            print(self.wait_time_list)
+            x = 0
+            while x < self.list_number:
+                print(self.wait_time_list[x])
+                x += 1
         print("Total wait time in %d runs:" % self.list_number, self.total_wait_time)
-        if self.pdata: print(self.wait_time_list)
+
     
         self.wait_time_list.sort()
     
-        print("The minimum is:", self.wait_time_list[0])
-        print("The maximum is:", self.wait_time_list[self.list_number - 1])
+        print("Minimum:", self.wait_time_list[0])
+        print("Maximum:", self.wait_time_list[self.list_number - 1])
         arithmetic_mean = self.total_wait_time / self.list_number
-        print("The mean is:", arithmetic_mean)
+        print("Mean:", arithmetic_mean)
     
-        print("The median is:", statistics.median(self.wait_time_list))
+        print("Median:", statistics.median(self.wait_time_list))
     
         try:
-            print("The standard deviation is:",
+            print("Standard Deviation:",
                   statistics.stdev(self.wait_time_list, arithmetic_mean))
         except statistics.StatisticsError:
-            print("The standard deviation is: N/A")
+            print("Standard Deviation: N/A")
     
     def master_run(self):
         tr = TrafficGrid(self.num_cars, self.pdata)

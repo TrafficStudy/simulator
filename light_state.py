@@ -46,7 +46,7 @@ class LightState1(LightState):
             sum += len(self.itn.outgoing_queue[i % 16])
         for i in range(s_block+8, s_block+12):
             sum += len(self.itn.outgoing_queue[i % 16])
-        if sum >= 2:
+        if sum >= 10:
             # self.itn.grid.add_event(EV_ALL_STOP, time, True, None)
             for i in range(len(self.phases)):
                 if self.phases[i][qid % 8] == 0:
