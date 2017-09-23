@@ -17,6 +17,7 @@ class LightState:
             # Can be altered to be asymmetrical
             #
             [1, 1, 1, 1, 0, 0, 0, 0, 50],
+            [1, 1, 1, 1, 1, 1, 1, 1, 4],
             [0, 0, 0, 0, 1, 1, 1, 1, 50]
         ]
         self.period = 100  # Typical red light duration
@@ -41,6 +42,7 @@ class LightState1(LightState):
             # Can be altered to be asymmetrical
             #
             [1, 1, 1, 1, 0, 0, 0, 0, 50],
+            [1, 1, 1, 1, 1, 1, 1, 1, 4],
             [0, 0, 0, 0, 1, 1, 1, 1, 50]
         ]
         self.period = 100  # Typical red light duration
