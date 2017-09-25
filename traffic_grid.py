@@ -146,7 +146,7 @@ class Intersection:
         ran2 = random.random()
         if ran2 < found_route[3]:  # Car got home
             stop_time = ts + round(found_route[4] * ran2 / found_route[3])
-            self.grid.add_event(EV_CAR_STOPPED, stop_time, True,
+            self.grid.add_event(EV_ALL_STOP, stop_time, True,
                                 (cid, self.iid, found_route[1]))
             return
 
@@ -359,12 +359,12 @@ class TrafficGrid:
 
 
 class Statistics:
+    # Program Parameters
     pdata = False  # determines whether to show specific events in each sample run
     list_number = 100  # number of times the program is going to run
     num_cars = 100  # number of cars in the system
-    grid_size = 4  # number of intersections in square grid
+    grid_size = 3  # number of intersections in square grid
     car_density = 10  # change density of cars by changing enter time
-    # random.seed(5) # deterministic randomness
 
     counter = 0
     total_wait_time = 0
