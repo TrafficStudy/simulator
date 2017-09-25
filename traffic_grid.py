@@ -259,7 +259,7 @@ class TrafficGrid:
                     io.assign_to_iid(1, iid - 1)
                     io.assign_to_iid(2, iid + (m + 2))
                     io.assign_to_iid(3, iid + 1)
-                # this section deals with inlets (NOTE: only inlets are at the edges of the grid
+                # this section deals with inlets NOTE: only inlets are at the edges of the grid
                 else:
                     pos_x = (i - 2) * 400
                     pos_y = (j - 2) * 400
@@ -362,8 +362,11 @@ class TrafficGrid:
 class Statistics:
     pdata = 0  # determines whether to show specific events in each sample run
     list_number = 100  # number of times the program is going to run
-    num_cars = 100
+    num_cars = 100  # number of cars in the system
+    grid_size = 3  # number of intersections in square grid
+    car_density = 10  # change density of cars by changing enter time
     # random.seed(5) # deterministic randomness
+
     counter = 0
     total_wait_time = 0
     wait_time_list = []
@@ -397,9 +400,13 @@ class Statistics:
             print("Standard Deviation: N/A")
     
     def master_run(self):
+        grid_size = 3
+        car_density = 10
+
         tr = TrafficGrid(self.num_cars, self.pdata)
         tr.choreographer = Choreographer(tr)
         tr.generate_grid(3, 3)
+        grid_size += 2
         # In this 3x3 grid example:
         #     1   2   3
         #     |   |   |
@@ -412,9 +419,17 @@ class Statistics:
         #     21  22  23
     
         last_ts = 0
-        inlet_array = [1, 2, 3, 5, 9, 10, 14, 15, 19, 21, 22, 23]
+        inlet_array = []
+        for i in range(grid_size):
+            if i == 0 or i == grid_size - 1:
+                for j in range(1, grid_size - 1):
+                    inlet_array.append(i*grid_size+j)
+            else:
+                inlet_array.append(i*grid_size)
+                inlet_array.append((i+1)*grid_size-1)
+
         for i in range(self.num_cars):
-            last_ts += random.randint(0, 10)
+            last_ts += random.randint(0, car_density)
             inlet = tr.intersections[random.choice(inlet_array)]
             tr.add_event(EV_CAR_ENTER_INTERSECTION,
                          last_ts, True, (i, inlet.to_iid, inlet.to_dir))
