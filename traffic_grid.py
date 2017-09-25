@@ -124,7 +124,6 @@ class Intersection:
             break
         qid = found_route[0] * self.n_to + found_route[1]
         is_red = self.light_state.is_red_at_time(ts, d, qid)
-        # if self.iid == 16: print(is_red)
         state = 0  # pass
         if is_red or self.outgoing_queue[qid]:
             if self.pdata:
@@ -249,7 +248,7 @@ class TrafficGrid:
             for j in range(n + 2):
                 iid = i + j * (m + 2)
                 if 0 < i < m + 1 and 0 < j < n + 1:
-                    io = Intersection(iid, self, self.pdata & (iid == 16))
+                    io = Intersection(iid, self, self.pdata and iid == 16)
                     io.set_position(i * 400 - 800, j * 400 - 800)
                     io.assign_from_iid(0, iid - (m + 2))
                     io.assign_from_iid(1, iid - 1)
@@ -304,7 +303,7 @@ class TrafficGrid:
         msg = "{:-3d}: ".format(ev[0]) + fmt.format(*ev[2])
         for d in range(16, -1, -1):
             msg = msg.replace('direction{}'.format(d), DIRECTION_NAMES[d % 4])
-        if ev[2][1] == 16:
+        if self.pdata and ev[2][1] == 16:
             print(msg)
 
     # this might be a short function but it's the method that makes this whole thing run
@@ -360,10 +359,10 @@ class TrafficGrid:
 
 
 class Statistics:
-    pdata = 0  # determines whether to show specific events in each sample run
+    pdata = False  # determines whether to show specific events in each sample run
     list_number = 100  # number of times the program is going to run
     num_cars = 100  # number of cars in the system
-    grid_size = 3  # number of intersections in square grid
+    grid_size = 4  # number of intersections in square grid
     car_density = 10  # change density of cars by changing enter time
     # random.seed(5) # deterministic randomness
 
@@ -372,7 +371,6 @@ class Statistics:
     wait_time_list = []
 
     def test(self):
-        self.pdata = True
         while self.counter < self.list_number:  # 2 -> program runs 2 consecutive times
             self.master_run()
         if self.pdata:
@@ -383,7 +381,6 @@ class Statistics:
                 x += 1
         print("Total wait time in %d runs:" % self.list_number, self.total_wait_time)
 
-    
         self.wait_time_list.sort()
     
         print("Minimum:", self.wait_time_list[0])
@@ -400,12 +397,13 @@ class Statistics:
             print("Standard Deviation: N/A")
     
     def master_run(self):
-        grid_size = 3
-        car_density = 10
+        grid_size = self.grid_size
+        car_density = self.car_density
+        pdata = self.pdata
 
-        tr = TrafficGrid(self.num_cars, self.pdata)
+        tr = TrafficGrid(self.num_cars, pdata)
         tr.choreographer = Choreographer(tr)
-        tr.generate_grid(3, 3)
+        tr.generate_grid(grid_size, grid_size)
         grid_size += 2
         # In this 3x3 grid example:
         #     1   2   3
