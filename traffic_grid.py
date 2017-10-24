@@ -5,6 +5,7 @@ import heapq
 import statistics
 from choreographer import Choreographer
 from light_state import LightState2 as LightState
+
 # import numpy as np
 
 # Terminology:
@@ -90,7 +91,6 @@ class Intersection:
         self.pos_y = 0
         self.light_state = LightState(self)
 
-
     def set_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
@@ -137,7 +137,7 @@ class Intersection:
             # No queue, just go through full speed
             if self.pdata:
                 print("{}: Car {} passes intersection #{} fast, to {}"
-                      .format(ts, cid, self.iid,DIRECTION_NAMES[found_route[1]]))
+                      .format(ts, cid, self.iid, DIRECTION_NAMES[found_route[1]]))
             self.go_to_next_intersection(ts, cid, found_route)
         return found_route[1], state
 
@@ -365,7 +365,6 @@ class Statistics:
     num_cars = 100  # number of cars in the system
     grid_size = 3  # number of intersections in square grid
     car_density = 10  # change density of cars by changing enter time
-
     counter = 0
     total_wait_time = 0
     wait_time_list = []
@@ -382,20 +381,20 @@ class Statistics:
         print("Total wait time in %d runs:" % self.list_number, self.total_wait_time)
 
         self.wait_time_list.sort()
-    
+
         print("Minimum:", self.wait_time_list[0])
         print("Maximum:", self.wait_time_list[self.list_number - 1])
         arithmetic_mean = self.total_wait_time / self.list_number
         print("Mean:", arithmetic_mean)
-    
+
         print("Median:", statistics.median(self.wait_time_list))
-    
+
         try:
             print("Standard Deviation:",
                   statistics.stdev(self.wait_time_list, arithmetic_mean))
         except statistics.StatisticsError:
             print("Standard Deviation: N/A")
-    
+
     def master_run(self):
         grid_size = self.grid_size
         car_density = self.car_density
@@ -415,16 +414,16 @@ class Statistics:
         # 15--16--17--18--19
         #     |   |   |
         #     21  22  23
-    
+
         last_ts = 0
         inlet_array = []
         for i in range(grid_size):
             if i == 0 or i == grid_size - 1:
                 for j in range(1, grid_size - 1):
-                    inlet_array.append(i*grid_size+j)
+                    inlet_array.append(i * grid_size + j)
             else:
-                inlet_array.append(i*grid_size)
-                inlet_array.append((i+1)*grid_size-1)
+                inlet_array.append(i * grid_size)
+                inlet_array.append((i + 1) * grid_size - 1)
 
         for i in range(self.num_cars):
             last_ts += random.randint(0, car_density)
@@ -437,6 +436,7 @@ class Statistics:
         self.total_wait_time += average_wait_time
         self.wait_time_list.append(average_wait_time)
         self.counter += 1
+
 
 if __name__ == "__main__":
     s = Statistics()

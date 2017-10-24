@@ -6,9 +6,9 @@ EV_CAR_ENTER_INTERSECTION = 2
 EV_LIGHT_CHANGE = 3
 EV_DEQUEUE_GREEN = 4  # This is the slow de-queuing of a light just turned green
 
+
 # This is the "basic light", which has a pair of connected red/green lights
 class LightState:
-
     def __init__(self, Intersection):
         super()
         # period and start determines how lights change
@@ -32,8 +32,8 @@ class LightState:
     def is_red_at_time(self, time, d, qid):
         return self.phases[self.state][qid % 8]
 
-class LightState1(LightState):
 
+class LightState1(LightState):
     def __init__(self, Intersection):
         super()
         # period and start determines how lights change
@@ -57,19 +57,19 @@ class LightState1(LightState):
     def is_red_at_time(self, time, d, qid):
         return self.phases[self.state][qid % 8]
 
+
 # Smarter cycle light that resets the cycle whenever a queue reaches over x cars
 class LightState2(LightState1):
-
     def is_red_at_time(self, time, d, qid):
         # 8 is the number of routes not with rotate. symm. ones (n_from * n_to / 2)
         test = (self.itn.iid == 16)
         end_state = self.state
         # sum is the number of cars in that direction
         sum = 1
-        s_block = (int)(qid/4)*4
-        for i in range(s_block, s_block+4):
+        s_block = (int)(qid / 4) * 4
+        for i in range(s_block, s_block + 4):
             sum += len(self.itn.outgoing_queue[i % 16])
-        for i in range(s_block+8, s_block+12):
+        for i in range(s_block + 8, s_block + 12):
             sum += len(self.itn.outgoing_queue[i % 16])
         if sum >= 2:
             # self.itn.grid.add_event(EV_ALL_STOP, time, True, None)
@@ -82,9 +82,8 @@ class LightState2(LightState1):
         is_red = self.phases[end_state][qid % 8]
         return is_red
 
+
 # Dumb light cycle that only changes to let queues pass
 class LightStateDiag(LightState):
-
     def is_red_at_time(self, time, d, qid):
         return True
-
